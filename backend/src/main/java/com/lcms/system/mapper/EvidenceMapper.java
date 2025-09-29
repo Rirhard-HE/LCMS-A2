@@ -1,6 +1,6 @@
-package com.example.backend.mapper;
+package com.lcms.system.mapper;
 
-import com.example.backend.entity.Evidence;
+import com.lcms.system.entity.Evidence;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 public interface EvidenceMapper extends BaseMapper<Evidence> {

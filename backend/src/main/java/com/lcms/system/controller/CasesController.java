@@ -1,7 +1,7 @@
-package com.example.backend.controller;
+package com.lcms.system.controller;
 
-import com.example.backend.entity.Cases;
-import com.example.backend.service.CasesService;
+import com.lcms.system.entity.Cases;
+import com.lcms.system.service.CasesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

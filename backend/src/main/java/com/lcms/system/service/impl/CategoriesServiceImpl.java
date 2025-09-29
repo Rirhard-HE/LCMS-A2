@@ -1,8 +1,8 @@
-package com.example.backend.service.impl;
+package com.lcms.system.service.impl;
 
-import com.example.backend.entity.Categories;
-import com.example.backend.mapper.CategoriesMapper;
-import com.example.backend.service.CategoriesService;
+import com.lcms.system.entity.Categories;
+import com.lcms.system.mapper.CategoriesMapper;
+import com.lcms.system.service.CategoriesService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 

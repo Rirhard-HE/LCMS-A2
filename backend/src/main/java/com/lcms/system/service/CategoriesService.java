@@ -1,6 +1,6 @@
-package com.example.backend.service;
+package com.lcms.system.service;
 
-import com.example.backend.entity.Categories;
+import com.lcms.system.entity.Categories;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 

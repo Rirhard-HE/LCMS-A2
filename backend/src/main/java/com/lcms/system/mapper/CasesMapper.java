@@ -1,6 +1,6 @@
-package com.example.backend.mapper;
+package com.lcms.system.mapper;
 
-import com.example.backend.entity.Cases;
+import com.lcms.system.entity.Cases;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 public interface CasesMapper extends BaseMapper<Cases> {

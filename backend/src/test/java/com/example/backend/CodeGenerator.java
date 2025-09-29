@@ -1,4 +1,4 @@
-package com.example.backend;
+package com.lcms.system;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.config.OutputFile;
@@ -27,7 +27,7 @@ public class CodeGenerator {
                         .disableOpenDir()
                 )
                 .packageConfig(builder -> builder
-                        .parent("com.example.backend")
+                        .parent("com.lcms.system")
                         .pathInfo(Collections.singletonMap(
                                 OutputFile.xml, projectDir + "/src/main/resources/mapper"
                         ))

@@ -1,6 +1,6 @@
-package com.example.backend.mapper;
+package com.lcms.system.mapper;
 
-import com.example.backend.entity.Categories;
+import com.lcms.system.entity.Categories;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 

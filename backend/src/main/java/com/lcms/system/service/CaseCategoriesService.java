@@ -1,6 +1,6 @@
-package com.example.backend.service;
+package com.lcms.system.service;
 
-import com.example.backend.entity.CaseCategories;
+import com.lcms.system.entity.CaseCategories;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface CaseCategoriesService extends IService<CaseCategories> {

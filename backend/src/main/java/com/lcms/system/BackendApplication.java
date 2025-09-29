@@ -1,4 +1,4 @@
-package com.example.backend;
+package com.lcms.system;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +8,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
-@MapperScan("com.example.backend.mapper")
+@MapperScan("com.lcms.system.mapper")
 public class BackendApplication {
     @Value("${server.port}")
     private String port;

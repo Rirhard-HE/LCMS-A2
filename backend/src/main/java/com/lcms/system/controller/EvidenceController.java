@@ -1,7 +1,7 @@
-package com.example.backend.controller;
+package com.lcms.system.controller;
 
-import com.example.backend.entity.Evidence;
-import com.example.backend.service.EvidenceService;
+import com.lcms.system.entity.Evidence;
+import com.lcms.system.service.EvidenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

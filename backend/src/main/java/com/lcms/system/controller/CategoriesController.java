@@ -1,7 +1,7 @@
-package com.example.backend.controller;
+package com.lcms.system.controller;
 
-import com.example.backend.entity.Categories;
-import com.example.backend.service.CategoriesService;
+import com.lcms.system.entity.Categories;
+import com.lcms.system.service.CategoriesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

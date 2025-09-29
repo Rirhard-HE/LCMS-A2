@@ -1,4 +1,4 @@
-package com.example.backend.entity;
+package com.lcms.system.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -19,34 +19,31 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@TableName("evidence")
-public class Evidence implements Serializable {
+@TableName("cases")
+public class Cases implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("case_id")
-    private Long caseId;
-
     @TableField("title")
     private String title;
+
+    @TableField("case_num")
+    private String caseNum;
 
     @TableField("description")
     private String description;
 
-    @TableField("file_url")
-    private String fileUrl;
+    @TableField("status")
+    private String status;
 
-    @TableField("mime_type")
-    private String mimeType;
+    @TableField("hearing_at")
+    private LocalDateTime hearingAt;
 
-    @TableField("size_bytes")
-    private Long sizeBytes;
-
-    @TableField("uploaded_by")
-    private Long uploadedBy;
+    @TableField("lawyer_id")
+    private Long lawyerId;
 
     @TableField("created_at")
     private LocalDateTime createdAt;

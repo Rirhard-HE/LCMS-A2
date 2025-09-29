@@ -1,8 +1,8 @@
-package com.example.backend.service.impl;
+package com.lcms.system.service.impl;
 
-import com.example.backend.entity.Evidence;
-import com.example.backend.mapper.EvidenceMapper;
-import com.example.backend.service.EvidenceService;
+import com.lcms.system.entity.Evidence;
+import com.lcms.system.mapper.EvidenceMapper;
+import com.lcms.system.service.EvidenceService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
