@@ -1,7 +1,10 @@
 package com.lcms.system.controller;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.lcms.system.entity.Cases;
+import com.lcms.system.security.SecurityUtil;
 import com.lcms.system.service.CasesService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +21,11 @@ public class CasesController {
     private CasesService casesService;
 
     @GetMapping
-    public List<Cases> list() {
-        return casesService.list();
+    public List<Cases> list(HttpServletRequest request) {
+        Long lawyerId = SecurityUtil.getCurrentLawyerId(request);
+        return casesService.lambdaQuery()
+                .eq(Cases::getLawyerId, lawyerId)
+                .list();
     }
 
     @GetMapping("/{id}")

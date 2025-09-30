@@ -39,4 +39,13 @@ public class JwtUtil {
                 .parseClaimsJws(token).getBody();
         return claims.getSubject();
     }
+
+    public Long extractLawyerId(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("lawyerId", Long.class);
+    }
 }
