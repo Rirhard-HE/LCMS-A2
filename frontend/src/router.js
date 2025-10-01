@@ -50,7 +50,7 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = !!localStorage.getItem('token')
+  const isLoggedIn = !!localStorage.getItem('jwt')
   if (to.matched.some(r => r.meta.public)) return next()
   if (!isLoggedIn && to.path !== '/login'){
     Message.warning('You must login')
