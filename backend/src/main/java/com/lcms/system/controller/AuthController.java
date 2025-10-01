@@ -50,7 +50,8 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest req) {
         authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
-        String token = jwtUtil.generateToken(req.getEmail());
+        Lawyers user = lawyersService.findByEmail(req.getEmail());
+        String token = jwtUtil.generateToken(user.getId(),req.getEmail());
         return new LoginResponse(token);
     }
 }

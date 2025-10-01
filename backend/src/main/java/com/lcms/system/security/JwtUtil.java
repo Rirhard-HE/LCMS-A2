@@ -24,10 +24,11 @@ public class JwtUtil {
         this.expireMillis = expireMinutes * 60_000;
     }
 
-    public String generateToken(String subject) {
+    public String generateToken(Long lawyerId,String subject) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .setSubject(subject)
+                .claim("lawyerId", lawyerId)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plusMillis(expireMillis)))
                 .signWith(key)

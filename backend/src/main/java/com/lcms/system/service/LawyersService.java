@@ -4,5 +4,6 @@ import com.lcms.system.entity.Lawyers;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface LawyersService extends IService<Lawyers> {
+    Lawyers findByEmail(String email);
 
 }
