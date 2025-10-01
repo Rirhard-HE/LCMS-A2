@@ -33,7 +33,6 @@
     <!-- ====== Page Actions ====== -->
     <div class="actions">
       <el-button type="primary" round icon="el-icon-plus" @click="$router.push('/cases/new')">Add Case</el-button>
-      <el-button type="danger"  round icon="el-icon-delete" @click="batchDelete" :disabled="!multipleSelection.length">Bulk Delete</el-button>
     </div>
 
     <!-- ====== Table ====== -->
