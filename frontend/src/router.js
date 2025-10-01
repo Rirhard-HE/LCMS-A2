@@ -37,7 +37,7 @@ const router = new Router({
       component: MainLayout,
       children: [
         { path: 'cases', name: 'cases', component: CasesList },
-        { path: 'cases/:caseNo', name: 'caseDetail', component: CaseDetail, props: true },
+        { path: 'cases/:id', name: 'caseDetail', component: CaseDetail, props: true },
         { path: 'hearings', name: 'hearings', component: HearingListCards },
         { path: 'categories', name: 'categories', component: Categories },
         { path: 'evidence', name: 'evidence', component: EvidenceList },

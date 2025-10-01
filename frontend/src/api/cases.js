@@ -8,6 +8,9 @@ export function listCases(params) {
 export function getCase(id) {
   return request.get(`/cases/${id}`)
 }
+export function removeCase(id) {
+  return request.delete(`/cases/${id}`)
+}
 
 export function createCase(body, categoryIds = []) {
   return request.post('/cases', body, {
