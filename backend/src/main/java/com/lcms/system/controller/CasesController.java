@@ -29,11 +29,12 @@ public class CasesController {
     @GetMapping
     public List<CaseRow> list(HttpServletRequest request,
                               @RequestParam(required = false) Long categoryId,
+                              @RequestParam(required = false) String keyword,
                               @RequestParam(defaultValue = "1") int pageNo,
                               @RequestParam(defaultValue = "10") int pageSize,
                               @RequestParam(defaultValue = "false") boolean all) {
         Long lawyerId = securityUtil.getCurrentLawyerId(request);
-        return casesService.listCases(lawyerId, categoryId, pageNo, pageSize);
+        return casesService.listCases(lawyerId, categoryId,keyword, pageNo, pageSize);
     }
 
     @GetMapping("/{id}")

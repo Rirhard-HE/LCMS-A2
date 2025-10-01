@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 public interface CasesService extends IService<Cases> {
-    List<CaseRow> listCases(Long lawyerId, Long categoryId, int pageNo, int pageSize);
+    List<CaseRow> listCases(Long lawyerId, Long categoryId, String keyword,int pageNo, int pageSize);
 
     boolean saveWithCategories(Cases cases, List<Long> categoryIds);
 

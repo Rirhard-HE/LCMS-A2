@@ -32,11 +32,11 @@ public class CasesServiceImpl extends ServiceImpl<CasesMapper, Cases> implements
 
 
     @Override
-    public List<CaseRow> listCases(Long lawyerId, Long categoryId, int pageNo, int pageSize) {
+    public List<CaseRow> listCases(Long lawyerId, Long categoryId, String keyword,int pageNo, int pageSize) {
         int safePageNo   = Math.max(pageNo, 1);
         int safePageSize = Math.max(pageSize, 1);
         int offset = (safePageNo - 1) * safePageSize;
-        return casesMapper.listCases(lawyerId, categoryId, offset, safePageSize);
+        return casesMapper.listCases(lawyerId, categoryId, keyword,offset, safePageSize);
     }
 
     @Transactional

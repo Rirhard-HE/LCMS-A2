@@ -24,21 +24,27 @@ public interface CasesMapper extends BaseMapper<Cases> {
       c.updated_at    AS updatedAt,
       GROUP_CONCAT(DISTINCT cat.name ORDER BY cat.name SEPARATOR ',') AS categoryNames
     FROM cases c
-    LEFT JOIN case_categories cc ON cc.case_id   = c.id
-    LEFT JOIN categories     cat ON cat.id       = cc.category_id
-    WHERE (#{lawyerId}  IS NULL OR c.lawyer_id = #{lawyerId})
+    LEFT JOIN case_categories cc ON cc.case_id = c.id
+    LEFT JOIN categories cat ON cat.id = cc.category_id
+    WHERE (#{lawyerId} IS NULL OR c.lawyer_id = #{lawyerId})
       AND (#{categoryId} IS NULL OR EXISTS (
             SELECT 1 FROM case_categories x
             WHERE x.case_id = c.id AND x.category_id = #{categoryId}
           ))
+      AND (#{keyword} IS NULL 
+           OR c.title LIKE CONCAT('%', #{keyword}, '%')
+           OR c.case_num LIKE CONCAT('%', #{keyword}, '%')
+           OR c.description LIKE CONCAT('%', #{keyword}, '%'))
     GROUP BY c.id
     ORDER BY c.updated_at DESC
     LIMIT #{offset}, #{limit}
-    """)
-    List<CaseRow> listCases(@Param("lawyerId")  Long lawyerId,
-                                  @Param("categoryId") Long categoryId,
-                                  @Param("offset")    int offset,
-                                  @Param("limit")     int limit);
+""")
+    List<CaseRow> listCases(@Param("lawyerId") Long lawyerId,
+                            @Param("categoryId") Long categoryId,
+                            @Param("keyword") String keyword,
+                            @Param("offset") int offset,
+                            @Param("limit") int limit);
+
 
     @Select("""
     SELECT
