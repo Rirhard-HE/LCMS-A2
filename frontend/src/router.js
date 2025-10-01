@@ -24,6 +24,7 @@ const router = new Router({
       path: '/',
       component: AuthLayout,
       children: [
+        { path: '', name: 'home', component: Home },
         { path: 'login', name: 'login', component: Login, meta: { public: true } },
         { path: 'register', name: 'register', component: Register, meta: { public: true } },
       ]
@@ -33,7 +34,6 @@ const router = new Router({
       path: '/',
       component: MainLayout,
       children: [
-        { path: '', name: 'home', component: Home },
         { path: 'cases', name: 'cases', component: CasesList },
         { path: 'cases/:caseNo', name: 'caseDetail', component: CaseDetail, props: true },
         { path: 'hearings', name: 'hearings', component: HearingListCards },

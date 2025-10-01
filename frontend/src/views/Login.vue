@@ -21,14 +21,13 @@
 </template>
 
 <script>
+import { login } from '../api/auth'
+
 export default {
   name: 'Login',
   data() {
     return {
-      form: {
-        email: '',
-        password: ''
-      },
+      form: { email: '', password: '' },
       rules: {
         email: [
           { required: true, message: 'Email is required', trigger: 'blur' },
@@ -40,17 +39,22 @@ export default {
   },
   methods: {
     onSubmit() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.$message.success('Login successful')
-          // TODO: 调用后端 API
-          this.$router.push('/')
-        }
-      })
+  this.$refs.loginForm.validate(async valid => {
+    if (!valid) return
+    try {
+      const { data } = await login(this.form)
+      localStorage.setItem('jwt', data.token)
+      this.$message.success('Login successful')
+      this.$router.push('/dashboard')
+    } catch {
+      this.$message.error('Login failed')
     }
+  })
+}
   }
 }
 </script>
+
 
 <style scoped>
 .auth-container {
