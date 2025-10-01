@@ -5,22 +5,25 @@
     </div>
     <div class="nav-right">
       <el-button type="text" icon="el-icon-bell"></el-button>
-      <el-dropdown>
-        <span class="el-dropdown-link">
-          <i class="el-icon-user"></i> Lawyer
-          <i class="el-icon-arrow-down el-icon--right"></i>
-        </span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item>Profile</el-dropdown-item>
-          <el-dropdown-item divided>Logout</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
+       <div class="nav-right">
+      <el-button type="danger" round @click="logout">
+        Logout
+      </el-button>
+    </div>
     </div>
   </header>
 </template>
 
 <script>
-export default { name: 'Navbar' }
+export default { name: 'Navbar',
+  methods: {
+    logout() {
+      localStorage.removeItem('jwt')
+      this.$message.success('Logged out')
+      this.$router.push('/login')
+    }
+  }
+}
 </script>
 
 <style scoped>
