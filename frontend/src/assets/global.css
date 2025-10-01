@@ -1,0 +1,98 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+html {
+  background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(99, 102, 241, 0.15), transparent),
+    radial-gradient(1200px 600px at 90% 30%, rgba(16, 185, 129, 0.16), transparent),
+    linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%);
+}
+
+.list_container {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 1px 2vw;
+  border: 2px solid #f1f1f1;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+  height: calc(100vh - 120px);
+}
+
+/* filters row */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+.toolbar_item {
+  display: flex;
+  align-items: center;
+  margin-right: 22px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+}
+.toolbar_label {
+  min-width: 120px;
+  text-align: right;
+  margin-right: 8px;
+  color: #334155;
+  font-weight: 700;
+}
+.toolbar_item .el-input {
+  width: 220px;
+}
+.toolbar_item .el-select {
+  width: 220px;
+}
+
+.toolbar_actions {
+  display: flex;
+  gap: 10px;
+  padding: 6px 18px;
+}
+
+.divider {
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 12px 0 18px;
+}
+
+.actions {
+  margin-bottom: 14px;
+  display: flex;
+  gap: 12px;
+}
+
+.table {
+  width: 100%;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding: 14px 0 4px;
+}
+
+.link {
+  color: #2f73ff;
+  cursor: pointer;
+}
+.link:hover {
+  text-decoration: underline;
+}

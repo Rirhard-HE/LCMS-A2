@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lcms.system.mapper.CasesMapper">
+
+    <resultMap id="BaseResultMap" type="com.lcms.system.entity.Cases">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="case_num" property="caseNum" />
+        <result column="description" property="description" />
+        <result column="status" property="status" />
+        <result column="hearing_at" property="hearingAt" />
+        <result column="lawyer_id" property="lawyerId" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, title, case_num, description, status, hearing_at, lawyer_id, created_at, updated_at
+    </sql>
+
+</mapper>
