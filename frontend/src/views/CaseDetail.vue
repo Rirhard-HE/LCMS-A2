@@ -7,7 +7,6 @@
         <div class="case_no">Case No. {{ caseData.caseNumber }}</div>
       </div>
       <div class="actions">
-        <el-button type="primary" round icon="el-icon-edit" @click="editCase">Edit Case</el-button>
         <el-button :type="caseData.status==='active' ? 'info' : 'success'" round @click="toggleStatus">
           {{ caseData.status==='active' ? 'Close' : 'Activate' }}
         </el-button>
@@ -40,85 +39,54 @@
       </div>
     </el-card>
 
-    <!-- ===== Tabs ===== -->
+    <!-- ===== Hearings Section (moved out of tabs) ===== -->
+    <el-card class="hearing_section" shadow="hover">
+      <div class="tab_header">
+        <div class="tab_title">Hearings</div>
+      </div>
+      <div class="hearing_list">
+        <el-card
+          v-for="h in caseData.hearings"
+          :key="h.id"
+          class="hearing_card"
+          shadow="hover"
+        >
+          <div class="hearing_row">
+            <div class="hearing_time">
+              Hearing Time:
+              <span class="time_value">{{ h.date }} {{ h.time }}</span>
+            </div>
+          </div>
+          <div class="hearing_case">
+            <span class="link" @click="goCase(caseData.caseNumber)">{{ caseData.title }}</span>
+            <span class="case_no_inline"> ({{ caseData.caseNumber }})</span>
+          </div>
+        </el-card>
+      </div>
+    </el-card>
+
+    <!-- ===== Evidence Section ===== -->
     <el-card class="tabs_card" shadow="never">
-      <el-tabs v-model="activeTab">
-        <!-- Hearings -->
-        <el-tab-pane label="Hearings" name="hearings">
-          <div class="tab_header">
-            <div class="tab_title">Upcoming & Past Hearings</div>
-            <el-button type="primary" round icon="el-icon-plus" @click="addHearing">Add Hearing</el-button>
-          </div>
-          <div class="hearing_list">
-            <el-card
-              v-for="h in caseData.hearings"
-              :key="h.id"
-              class="hearing_card"
-              shadow="hover"
-            >
-              <div class="hearing_row">
-                <div class="hearing_time">
-                  Hearing Time:
-                  <span class="time_value">{{ h.date }} {{ h.time }}</span>
-                </div>
-                <div class="hearing_actions">
-                  <el-button type="danger" plain round size="mini" @click="notify(h)">Notify Me</el-button>
-                </div>
-              </div>
-              <div class="hearing_case">
-                <span class="link" @click="goCase(caseData.caseNumber)">{{ caseData.title }}</span>
-                <span class="case_no_inline"> ({{ caseData.caseNumber }})</span>
-              </div>
-            </el-card>
-          </div>
-        </el-tab-pane>
-
-        <!-- Evidence -->
-        <el-tab-pane label="Evidence" name="evidence">
-          <div class="tab_header">
-            <div class="tab_title">Evidence List</div>
-            <el-button type="primary" round icon="el-icon-upload" @click="addEvidence">Add Evidence</el-button>
-          </div>
-          <el-table
-            :data="caseData.evidence"
-            class="table"
-            height="380"
-            border
-          >
-            <el-table-column type="index" width="60" align="center" />
-            <el-table-column label="File Name" prop="filename" min-width="240">
-              <template slot-scope="scope">
-                <span class="link" @click="downloadEvidence(scope.row)">{{ scope.row.filename }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Uploaded By" prop="uploadedBy" width="160" />
-            <el-table-column label="Uploaded At" prop="uploadedAt" width="180" />
-            <el-table-column label="Actions" width="160" fixed="right">
-              <template slot-scope="scope">
-                <el-button size="mini" type="primary" round @click="downloadEvidence(scope.row)">Download</el-button>
-                <el-button size="mini" type="danger"  round @click="deleteEvidence(scope.row)">Delete</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-tab-pane>
-
-        <!-- History -->
-        <el-tab-pane label="History" name="history">
-          <el-timeline>
-            <el-timeline-item
-              v-for="(it, idx) in caseData.history"
-              :key="idx"
-              :timestamp="it.time"
-              placement="top"
-            >
-              <el-card class="history_card">
-                <div class="history_title">{{ it.title }}</div>
-                <div class="history_desc">{{ it.desc }}</div>
-              </el-card>
-            </el-timeline-item>
-          </el-timeline>
-        </el-tab-pane>
-      </el-tabs>
+      <div class="tab_header">
+        <div class="tab_title">Evidence List</div>
+        <el-button type="primary" round icon="el-icon-folder-add" @click="goEvidence">Go to evidence</el-button>
+      </div>
+      <el-table
+        :data="caseData.evidence"
+        class="table"
+        height="380"
+        border
+      >
+        <el-table-column type="index" width="60" align="center" />
+        <el-table-column label="File Name" prop="filename" min-width="240">
+          <template slot-scope="scope">
+            <span>{{ scope.row.filename }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Uploaded By" prop="uploadedBy" width="160" />
+        <el-table-column label="Uploaded At" prop="uploadedAt" width="180" />
+        <!-- 删除 Actions 列 -->
+      </el-table>
     </el-card>
   </div>
 </template>
@@ -128,13 +96,12 @@ export default {
   name: 'CaseDetail',
   data() {
     return {
-      activeTab: 'hearings',
       caseData: {
         id: 1,
         caseNumber: 'LC-2025-0001',
         title: 'Johnson v. State',
         category: 'Criminal',
-        status: 'active', // active | closed | draft
+        status: 'active',
         owner: 'Alice',
         createdAt: '2025-09-10 12:00',
         updatedAt: '2025-09-25 16:40',
@@ -143,48 +110,26 @@ export default {
         ],
         evidence: [
           { id: 11, filename: 'witness_statement.pdf', uploadedBy: 'Alice', uploadedAt: '2025-09-12 09:30' },
-          { id: 12, filename: 'photo_scene.jpg',       uploadedBy: 'Bob',   uploadedAt: '2025-09-15 11:00' },
-          { id: 13, filename: 'contract_scan.pdf',     uploadedBy: 'Eve',   uploadedAt: '2025-09-20 15:45' }
-        ],
-        history: [
-          { time: '2025-09-10 12:00', title: 'Case Created',         desc: 'Initial case created by Alice.' },
-          { time: '2025-09-15 11:00', title: 'Evidence Added',       desc: 'photo_scene.jpg uploaded by Bob.' },
-          { time: '2025-09-20 15:45', title: 'Evidence Added',       desc: 'contract_scan.pdf uploaded by Eve.' },
-          { time: '2025-09-25 16:40', title: 'Hearing Scheduled',    desc: 'Hearing set on 2025-10-01 10:00.' }
+          { id: 12, filename: 'photo_scene.jpg',       uploadedBy: 'Bob',   uploadedAt: '2025-09-15 11:00' }
         ]
       }
     }
-  },
-  created() {
-    // If you use route param, you can switch dummy by ID here:
-    // const id = this.$route.params.id
-    // fetch or select mock by id...
   },
   filters: {
     ucFirst(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1) : v }
   },
   methods: {
-    editCase() {
-      this.$message.success('Edit case (mock)')
-      // this.$router.push(`/cases/${this.caseData.id}/edit`)
-    },
     toggleStatus() {
       this.caseData.status = this.caseData.status === 'active' ? 'closed' : 'active'
       this.$message.success('Status updated (mock)')
     },
-    addHearing() { this.$message.success('Add hearing (mock)') },
-    notify(h) { this.$message.success(`You will be notified for ${h.date} ${h.time}`) },
-    goCase(caseNo) { this.$message.info(`Go to case ${caseNo} (mock)`) },
-    addEvidence() { this.$message.success('Add evidence (mock)') },
-    downloadEvidence(row) { this.$message.success(`Downloading ${row.filename} (mock)`) },
-    deleteEvidence(row) {
-      this.$confirm(`Delete ${row.filename}?`, 'Confirm', { type: 'warning' })
-        .then(() => {
-          this.caseData.evidence = this.caseData.evidence.filter(e => e.id !== row.id)
-          this.$message.success('Deleted')
-        })
-        .catch(() => {})
-    }
+    addHearing() {
+      this.$message.info('Add hearing clicked (mock)')
+    },
+    goEvidence() {
+      this.$router.push('/evidence')
+    },
+    goCase(caseNo) { this.$message.info(`Go to case ${caseNo} (mock)`) }
   }
 }
 </script>
