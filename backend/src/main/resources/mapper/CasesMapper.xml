@@ -14,8 +14,58 @@
         <result column="updated_at" property="updatedAt" />
     </resultMap>
 
+    <resultMap id="CaseWithCatsMap" type="com.lcms.system.dto.CaseWithCategoryListVO">
+        <id     column="id"           property="id"/>
+        <result column="title"        property="title"/>
+        <result column="case_num"     property="caseNum"/>
+        <result column="description"  property="description"/>
+        <result column="status"       property="status"/>
+        <result column="hearing_at"   property="hearingAt"/>
+        <result column="lawyer_id"    property="lawyerId"/>
+        <result column="created_at"   property="createdAt"/>
+        <result column="updated_at"   property="updatedAt"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
         id, title, case_num, description, status, hearing_at, lawyer_id, created_at, updated_at
     </sql>
+
+    <select id="selectCasesWithCategories" resultMap="CaseWithCatsMap">
+        SELECT
+        c.id, c.title, c.case_num, c.description, c.status,
+        c.hearing_at, c.lawyer_id, c.created_at, c.updated_at,
+        GROUP_CONCAT(DISTINCT cat.name ORDER BY cat.name SEPARATOR ',') AS category_names
+        FROM cases c
+        LEFT JOIN case_categories cc ON cc.case_id = c.id
+        LEFT JOIN categories cat ON cat.id = cc.category_id
+        WHERE c.lawyer_id = #{lawyerId}
+
+        <if test="categoryIds != null and categoryIds.size > 0 and (matchAll == null or matchAll == false)">
+            AND EXISTS (
+            SELECT 1 FROM case_categories x
+            WHERE x.case_id = c.id
+            AND x.category_id IN
+            <foreach collection="categoryIds" item="cid" open="(" separator="," close=")">
+                #{cid}
+            </foreach>
+            )
+        </if>
+
+        <if test="categoryIds != null and categoryIds.size > 0 and matchAll == true">
+            AND c.id IN (
+            SELECT y.case_id
+            FROM case_categories y
+            WHERE y.category_id IN
+            <foreach collection="categoryIds" item="cid" open="(" separator="," close=")">
+                #{cid}
+            </foreach>
+            GROUP BY y.case_id
+            HAVING COUNT(DISTINCT y.category_id) = #{categoryIds.size}
+            )
+        </if>
+
+        GROUP BY c.id
+        ORDER BY c.updated_at DESC
+    </select>
 
 </mapper>
