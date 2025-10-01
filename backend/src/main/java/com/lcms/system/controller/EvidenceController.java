@@ -76,17 +76,18 @@ public class EvidenceController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Evidence upload(@RequestParam("caseId") Long caseId,
+    public Evidence upload(HttpServletRequest request,@RequestParam("caseId") Long caseId,
                            @RequestPart("file") MultipartFile file,
                            @RequestParam(value = "title", required = false) String title,
-                           @RequestParam(value = "uploadBy", required = false) Long uploadBy,
                            @RequestParam(value = "description", required = false) String description) throws IOException {
+        Long lawyerId = securityUtil.getCurrentLawyerId(request);
+
         if (caseId == null || file == null || file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         String original = StringUtils.cleanPath(file.getOriginalFilename());
         String ext = getExt(original);
         if (!Arrays.asList("pdf", "doc", "docx").contains(ext)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
-        Path baseDir = Paths.get(System.getProperty("user.dir"), "backend", "src", "main", "resources", "static", "uploads", "case-" + caseId);
+        Path baseDir = Paths.get(System.getProperty("user.dir"), "backend", "uploads", "case-" + caseId);
         Files.createDirectories(baseDir);
         String storedName = UUID.randomUUID().toString().replace("-", "") + "-" + original;
         Path target = baseDir.resolve(storedName);
@@ -100,7 +101,7 @@ public class EvidenceController {
         ev.setFileUrl(fileUrl);
         ev.setMimeType(Files.probeContentType(target));
         ev.setSizeBytes(file.getSize());
-        ev.setUploadedBy(uploadBy);
+        ev.setUploadedBy(lawyerId);
         evidenceService.save(ev);
         return ev;
     }
@@ -122,7 +123,7 @@ public class EvidenceController {
             String ext = getExt(original);
             if (!Arrays.asList("pdf", "doc", "docx").contains(ext)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
-            Path baseDir = Paths.get(System.getProperty("user.dir"), "backend", "src", "main", "resources", "static", "uploads", "case-" + ev.getCaseId());
+            Path baseDir = Paths.get(System.getProperty("user.dir"), "backend", "uploads", "case-" + ev.getCaseId());
             Files.createDirectories(baseDir);
             String storedName = UUID.randomUUID().toString().replace("-", "") + "-" + original;
             Path target = baseDir.resolve(storedName);
