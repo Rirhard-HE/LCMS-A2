@@ -21,6 +21,10 @@ export default {
     return request.delete(`/evidence/${id}`)
   },
 
+  listByCaseId(caseId){
+    return request.get(`/evidence/by-case/${caseId}`)
+  },
+
   upload(caseId, file, title, description) {
     const formData = new FormData()
     formData.append('caseId', caseId)

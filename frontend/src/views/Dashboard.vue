@@ -22,7 +22,7 @@
             <el-card class="hearing_calendar" shadow="hover">
                 <h3 class="card_title">Hearing Calendar</h3>
                 <el-calendar v-model="calendarDate">
-                    <template slot="dateCell" slot-scope="{ date, data }">
+                    <template slot="dateCell" slot-scope="{ data }">
                         <div class="calendar-cell" :class="{ hearing: hasHearing(data.day) }">
                             {{ data.day.split('-').slice(2).join('') }}
                         </div>
@@ -67,7 +67,6 @@ export default {
           var row = arr[i]
           var item = this.mapRow(row)
           mapped.push(item)
-          console.log(mapped)
           if (row.hearingAt) {
             var day = this.onlyDate(row.hearingAt)
             if (day) hearingDays[day] = true
