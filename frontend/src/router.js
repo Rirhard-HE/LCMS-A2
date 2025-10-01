@@ -15,6 +15,8 @@ import Dashboard from './views/Dashboard.vue'
 import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
 
+import { Message } from 'element-ui'
+
 Vue.use(Router)
 
 const router = new Router({
@@ -24,6 +26,7 @@ const router = new Router({
       path: '/',
       component: AuthLayout,
       children: [
+        { path: '', name: 'home', component: Home,meta:{public:true} },
         { path: 'login', name: 'login', component: Login, meta: { public: true } },
         { path: 'register', name: 'register', component: Register, meta: { public: true } },
       ]
@@ -33,7 +36,6 @@ const router = new Router({
       path: '/',
       component: MainLayout,
       children: [
-        { path: '', name: 'home', component: Home },
         { path: 'cases', name: 'cases', component: CasesList },
         { path: 'cases/:caseNo', name: 'caseDetail', component: CaseDetail, props: true },
         { path: 'hearings', name: 'hearings', component: HearingListCards },
@@ -47,11 +49,14 @@ const router = new Router({
   ]
 })
 
-// router.beforeEach((to, from, next) => {
-//   const isLoggedIn = !!localStorage.getItem('token')
-//   if (to.matched.some(r => r.meta.public)) return next()
-//   if (!isLoggedIn && to.path !== '/login') return next('/login')
-//   next()
-// })
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = !!localStorage.getItem('jwt')
+  if (to.matched.some(r => r.meta.public)) return next()
+  if (!isLoggedIn && to.path !== '/login'){
+    Message.warning('You must login')
+    return next('/login')
+  }
+  next()
+})
 
 export default router

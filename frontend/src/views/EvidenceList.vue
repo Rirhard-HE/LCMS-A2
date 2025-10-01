@@ -23,9 +23,6 @@
       <el-button type="primary" round icon="el-icon-upload2" @click="$message.info('Upload (mock)')">
         Upload Evidence
       </el-button>
-      <el-button type="danger" round icon="el-icon-delete" :disabled="!multipleSelection.length" @click="batchDelete">
-        Bulk Delete
-      </el-button>
     </div>
 
     <!-- Table -->
