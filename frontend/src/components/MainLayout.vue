@@ -1,19 +1,13 @@
-<template>
-  <el-container class="app-layout">
-    <el-header class="app-header">
+﻿<template>
+  <div :class="['app-shell', { 'is-collapsed': collapsed }]">
+    <Sidebar v-model="collapsed" />
+    <div class="app-content">
       <Navbar />
-    </el-header>
-
-    <el-container class="app-body">
-      <el-aside :width="collapsed ? '64px' : '220px'" class="app-aside">
-        <Sidebar v-model="collapsed" />
-      </el-aside>
-
-      <el-main class="app-main">
+      <main class="app-main">
         <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+      </main>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -30,35 +24,46 @@ export default {
 </script>
 
 <style scoped>
-
-.app-layout {
-  height: 100vh;
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  padding-left: calc(264px + 48px);
+  transition: padding-left 0.25s ease;
 }
 
-.app-header {
-  height: var(--nav-h) !important; 
-  line-height: var(--nav-h);
-  padding: 0;
+.app-shell.is-collapsed {
+  padding-left: calc(72px + 48px);
 }
 
-.app-body {
-  height: calc(100vh - var(--nav-h));
+.app-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px 48px 32px;
+  transition: padding 0.25s ease;
 }
 
-.app-aside {
-  overflow: auto;
-  border-right: 1px solid rgba(255,255,255,.06);
-  transition: width .25s ease;
-  background: rgba(41,112,179,0.9);
+.app-shell.is-collapsed .app-content {
+  padding-left: 32px;
+}
+
+.app-content > * + * {
+  margin-top: 24px;
 }
 
 .app-main {
-  min-width: 0;
-  height: 100%;
-  overflow: auto;
-  padding: 0;
-  background: radial-gradient(1200px 600px at 10% 10%, rgba(99,102,241,0.15), transparent),
-              radial-gradient(1200px 600px at 90% 30%, rgba(16,185,129,0.16), transparent),
-              linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%);
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    padding-left: calc(72px + 32px);
+  }
+
+  .app-content {
+    padding: 24px;
+  }
 }
 </style>
