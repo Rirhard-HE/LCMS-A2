@@ -1,6 +1,6 @@
 <template>
   <div class="list_container">
-    <!-- Filters -->
+    <!-- Cancel Filters -->
     <div class="toolbar">
       <!-- <div class="toolbar_item">
         <label class="toolbar_label">Keyword:</label>
