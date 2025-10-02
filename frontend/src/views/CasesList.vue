@@ -1,266 +1,262 @@
-<template>
-  <div class="list_container">
-    <!-- ====== Filters ====== -->
-    <div class="toolbar">
-      <div class="toolbar_item">
-        <label class="toolbar_label">By Case Title:</label>
-        <el-input v-model="filters.title" placeholder="Enter case title" clearable maxlength="50" />
+﻿<template>
+  <div class="page">
+    <header class="page_header">
+      <div class="page_headline">
+        <h1>Cases</h1>
+        <p class="page_subtitle">Monitor every matter and its upcoming deadlines.</p>
       </div>
-
-      <div class="toolbar_item">
-        <label class="toolbar_label">By Category:</label>
-        <el-select v-model="filters.category" clearable placeholder="Select category" style="min-width:200px">
-          <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />
-        </el-select>
+      <div class="metrics_grid">
+        <div class="metric_card">
+          <span class="metric_label">Total</span>
+          <span class="metric_value">{{ summary.total }}</span>
+          <span class="metric_hint">records</span>
+        </div>
+        <div class="metric_card">
+          <span class="metric_label">Active</span>
+          <span class="metric_value">{{ summary.active }}</span>
+          <span class="metric_hint">in progress</span>
+        </div>
+        <div class="metric_card">
+          <span class="metric_label">Upcoming</span>
+          <span class="metric_value">{{ summary.upcoming }}</span>
+          <span class="metric_hint">hearings scheduled</span>
+        </div>
       </div>
+    </header>
 
-      <div class="toolbar_actions">
-        <el-button type="success" round @click="fetchCases">Search</el-button>
-        <el-button round @click="resetFilters">Reset</el-button>
+    <section class="card filters_card">
+      <div class="card_header">
+        <h2>Filters</h2>
+        <span class="card_hint">Search by title, category or status</span>
       </div>
-    </div>
-
-    <div class="divider" />
-
-    <!-- ====== Page Actions ====== -->
-    <div class="actions">
-      <el-button type="primary" round icon="el-icon-plus" @click="openCreate">Add Case</el-button>
-    </div>
-
-    <!-- ====== Table ====== -->
-    <el-table
-      :data="tableData"
-      v-loading="loading"
-      tooltip-effect="dark"
-      class="table"
-      height="calc(100vh - 360px)"
-    >
-      <el-table-column type="index" label="#" width="60" align="center" fixed="left" />
-
-      <el-table-column label="Case No." prop="caseNumber" width="160" />
-      <el-table-column label="Title" prop="title" min-width="200" fixed="left">
-        <template slot-scope="scope">
-          <span class="link" @click="goDetail(scope.row)">{{ scope.row.title }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Category" prop="category" min-width="200" />
-      <el-table-column label="Status" prop="status" width="120" :formatter="statusFormat" />
-      <el-table-column label="Hearing" prop="hearingAt" width="160" />
-      <el-table-column label="Created At" prop="createdAt" width="160" />
-
-    <el-table-column label="Actions" min-width="260" fixed="right">
-  <template slot-scope="scope">
-    <el-button size="mini" type="primary" round @click="goDetail(scope.row)">Details</el-button>
-    <el-button size="mini" type="success" round @click="openEdit(scope.row)">Edit</el-button>
-    <el-button size="mini" type="danger" round @click="deleteRow(scope.row)">Delete</el-button>
-  </template>
-</el-table-column>
-    </el-table>
-
-    <!-- ====== Pagination ====== -->
-    <div class="pagination">
-      <el-pagination
-        :current-page="pagination.page"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="pagination.pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="pagination.total"
-        @size-change="onPageSizeChange"
-        @current-change="onPageChange"
-      />
-    </div>
-
-    <!-- ====== Create Dialog ====== -->
-    <el-dialog title="Add Case" :modal="false" :visible.sync="createDlg.visible" width="560px" @close="resetCreateForm">
-      <el-form :model="createDlg.form" :rules="rules" ref="createForm" label-position="top">
-        <el-form-item label="Title" prop="title">
-          <el-input v-model="createDlg.form.title" maxlength="255" />
-        </el-form-item>
-        <el-form-item label="Case No." prop="caseNum">
-          <el-input v-model="createDlg.form.caseNum" maxlength="100" />
-        </el-form-item>
-        <el-form-item label="Description">
-          <el-input v-model="createDlg.form.description" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="Status" prop="status">
-          <el-select v-model="createDlg.form.status">
-            <el-option label="OPEN" value="OPEN" />
-            <el-option label="CLOSED" value="CLOSED" />
+      <div class="filter_grid">
+        <div class="toolbar_item">
+          <label class="toolbar_label">Case Title</label>
+          <el-input v-model="filters.title" placeholder="Enter case title" clearable maxlength="80" @keyup.enter.native="fetchCases" />
+        </div>
+        <div class="toolbar_item">
+          <label class="toolbar_label">Category</label>
+          <el-select v-model="filters.category" clearable placeholder="Select category">
+            <el-option v-for="option in categoryOptions" :key="option.value" :label="option.label" :value="option.value" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="Hearing At">
-          <el-date-picker v-model="createDlg.form.hearingAt" type="datetime" placeholder="Select date & time" style="width:100%" />
-        </el-form-item>
-        <el-form-item label="Categories">
-          <el-select v-model="createDlg.form.categoryIds" multiple placeholder="Select categories" style="width:100%">
-            <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />
+        </div>
+        <div class="toolbar_item">
+          <label class="toolbar_label">Status</label>
+          <el-select v-model="filters.status" clearable placeholder="Select status">
+            <el-option label="Active" value="active" />
+            <el-option label="Closed" value="closed" />
+            <el-option label="Draft" value="draft" />
           </el-select>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button @click="createDlg.visible=false">Cancel</el-button>
-        <el-button type="primary" @click="submitCreate">Create</el-button>
-      </span>
-    </el-dialog>
+        </div>
+      </div>
+      <div class="filter_actions">
+        <el-button type="primary" round icon="el-icon-search" @click="fetchCases">Search</el-button>
+        <el-button round @click="resetFilters">Clear</el-button>
+      </div>
+    </section>
 
-    <!-- ====== Edit Dialog ====== -->
-    <el-dialog title="Edit Case" :modal="false" :visible.sync="editDlg.visible" width="560px" @close="resetEditForm">
-      <el-form :model="editDlg.form" :rules="rules" ref="editForm" label-position="top">
-        <el-form-item label="Title" prop="title">
-          <el-input v-model="editDlg.form.title" maxlength="255" />
-        </el-form-item>
-        <el-form-item label="Case No." prop="caseNum">
-          <el-input v-model="editDlg.form.caseNum" maxlength="100" />
-        </el-form-item>
-        <el-form-item label="Description">
-          <el-input v-model="editDlg.form.description" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="Status" prop="status">
-          <el-select v-model="editDlg.form.status">
-            <el-option label="OPEN" value="OPEN" />
-            <el-option label="CLOSED" value="CLOSED" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Hearing At">
-          <el-date-picker v-model="editDlg.form.hearingAt" type="datetime" placeholder="Select date & time" style="width:100%" />
-        </el-form-item>
-        <el-form-item label="Categories">
-          <el-select v-model="editDlg.form.categoryIds" multiple placeholder="Select categories" style="width:100%">
-            <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button @click="editDlg.visible=false">Cancel</el-button>
-        <el-button type="primary" @click="submitEdit">Save</el-button>
-      </span>
-    </el-dialog>
+    <section class="card action_card">
+      <div class="card_header">
+        <h2>Quick Actions</h2>
+        <span class="card_hint">Use the case register to stay on top of upcoming hearings</span>
+      </div>
+      <div class="action_buttons">
+        <el-button type="primary" round icon="el-icon-plus" @click="goCreate">Add Case</el-button>
+      </div>
+    </section>
+
+    <section class="card table_card">
+      <div class="card_header">
+        <h2>Case Register</h2>
+        <span class="card_hint">Showing {{ tableData.length }} of {{ pagination.total }} cases</span>
+      </div>
+      <el-table
+        v-loading="loading"
+        class="data_table"
+        :data="tableData"
+        tooltip-effect="dark"
+        @sort-change="onSortChange"
+      >
+        <el-table-column prop="caseNumber" label="Case No." width="140" sortable="custom" />
+        <el-table-column prop="title" label="Title" min-width="200" sortable="custom">
+          <template slot-scope="scope">
+            <span class="link" @click="goDetail(scope.row)">{{ scope.row.title }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="categoryLabel" label="Categories" min-width="160" sortable="custom" />
+        <el-table-column prop="status" label="Status" width="120" sortable="custom">
+          <template slot-scope="scope">
+            <el-tag :type="statusType(scope.row.status)" effect="plain">{{ statusFormat(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hearingAt" label="Hearing" width="180" sortable="custom">
+          <template slot-scope="scope">
+            {{ formatDateTime(scope.row.hearingAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="updatedAt" label="Updated" width="180" sortable="custom">
+          <template slot-scope="scope">
+            {{ formatDateTime(scope.row.updatedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="Created" width="180" sortable="custom">
+          <template slot-scope="scope">
+            {{ formatDateTime(scope.row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="owner" label="Owner" width="150" />
+        <el-table-column label="Actions" width="120" fixed="right">
+          <template slot-scope="scope">
+            <el-button size="mini" type="primary" round @click="goDetail(scope.row)">Details</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="table_footer">
+        <el-pagination
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total"
+          @size-change="onPageSizeChange"
+          @current-change="onPageChange"
+        />
+      </div>
+    </section>
   </div>
 </template>
 
 <script>
-import { listCases, getCase, createCase, updateCase,removeCase } from '@/api/cases'
-import categoryApi from '../api/categories'
+import { listCases } from '@/api/cases'
+import categoriesApi from '@/api/categories'
+
+const dateTimeFormatter = new Intl.DateTimeFormat('en-AU', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})
 
 export default {
   name: 'CaseList',
   data() {
     return {
       loading: false,
-      filters: { title: '', category: '' },
+      filters: {
+        title: '',
+        category: null,
+        status: ''
+      },
       categoryOptions: [],
+      summary: {
+        total: 0,
+        active: 0,
+        upcoming: 0
+      },
+      rawData: [],
       tableData: [],
-      pagination: { page: 1, pageSize: 10, total: 0 },
-
-      createDlg: {
-        visible: false,
-        form: { title: '', caseNum: '', description: '', status: 'OPEN', hearingAt: null, categoryIds: [] }
+      pagination: {
+        page: 1,
+        pageSize: 10,
+        total: 0
       },
-      editDlg: {
-        visible: false,
-        form: { id: null, title: '', caseNum: '', description: '', status: 'OPEN', hearingAt: null, categoryIds: [] }
-      },
-
-      rules: {
-        title:   [{ required: true, message: 'Title required', trigger: 'blur' }],
-        caseNum: [{ required: true, message: 'Case No. required', trigger: 'blur' }],
-        status:  [{ required: true, message: 'Status required', trigger: 'change' }]
+      sortState: {
+        prop: '',
+        order: ''
       }
     }
   },
   created() {
-    this.init()
+    this.initialise()
   },
   methods: {
-    async init() {
-      await this.fetchCategories()
-      await this.fetchCases()
-    },
-
-    async fetchCategories() {
-  try {
-    const data= await categoryApi.list()
-    this.categoryOptions = data.map(function(c) {
-      return { label: c.name, value: c.id }
-    })
-  } catch (e) {
-    this.$message.error('Failed to load categories')
-  }
-},
-
-    async fetchCases() {
-  this.loading = true
-  try {
-    const params = {
-      pageNo: this.pagination.page,
-      pageSize: this.pagination.pageSize
-    }
-    if (this.filters.category) params.categoryId = this.filters.category
-    if (this.filters.title) params.title = this.filters.title
-
-    const  data= await listCases(params)
-    let list = []
-    if (Array.isArray(data)) {
-      list = data
-    } else if (data && Array.isArray(data.data)) {
-      list = data.data
-    } else if (data && Array.isArray(data.records)) {
-      list = data.records
-    }
-
-    var rows = list.map(this.mapRow)
-    this.tableData = rows
-
-    var count = rows.length
-    var base = (this.pagination.page - 1) * this.pagination.pageSize
-    this.pagination.total = base + count
-  } catch (e) {
-    this.$message.error('Failed to load cases')
-  } finally {
-    this.loading = false
-  }
-},
-
-   mapRow: function(row) {
-  var category = '—'
-  if (row.categories && row.categories.length) {
-    category = row.categories.join(', ')
-  }
-
-  var status = 'closed'
-  if (row.status === 'OPEN') {
-    status = 'active'
-  }
-
-  var hearingAt = '—'
-  if (row.hearingAt) {
-    hearingAt = row.hearingAt.replace('T', ' ').slice(0, 16)
-  }
-
-  var createdAt = '—'
-  if (row.createdAt) {
-    createdAt = row.createdAt.replace('T', ' ').slice(0, 16)
-  }
-
-  return {
-    id: row.id,
-    caseNumber: row.caseNum,
-    title: row.title,
-    category: category,
-    status: status,
-    hearingAt: hearingAt,
-    createdAt: createdAt,
-  }
-},
-
-
-    resetFilters() {
-      this.filters = { title: '', category: '' }
-      this.pagination.page = 1
+    async initialise() {
+      await this.loadCategories()
       this.fetchCases()
     },
+    async loadCategories() {
+      try {
+        const list = await categoriesApi.list()
+        const records = list && Array.isArray(list.records) ? list.records : (Array.isArray(list) ? list : [])
+        this.categoryOptions = records.map(item => ({ label: item.name, value: item.id }))
+      } catch (error) {
+        this.categoryOptions = []
+      }
+    },
+    async fetchCases() {
+      this.loading = true
+      try {
+        const params = {
+          pageNo: this.pagination.page,
+          pageSize: this.pagination.pageSize
+        }
+        if (this.filters.title) params.keyword = this.filters.title.trim()
+        if (this.filters.category) params.categoryId = this.filters.category
+        if (this.filters.status) params.status = this.filters.status
 
+        const response = await listCases(params)
+        const summaryOrEmpty = value => (value && typeof value === 'object' ? value : {})
+        const records = response && Array.isArray(response.records) ? response.records : []
+        const summary = summaryOrEmpty(response && response.summary)
+        this.summary = {
+          total: summary.total != null ? summary.total : (response && typeof response.total === 'number' ? response.total : records.length),
+          active: summary.active != null ? summary.active : 0,
+          upcoming: summary.upcoming != null ? summary.upcoming : 0
+        }
+        this.pagination.total = response && typeof response.total === 'number' ? response.total : records.length
+        this.rawData = records.map(this.normaliseCase)
+        this.applySorting()
+      } catch (error) {
+        this.$message.error('Failed to load cases')
+        this.rawData = []
+        this.tableData = []
+        this.pagination.total = 0
+        this.summary = { total: 0, active: 0, upcoming: 0 }
+      } finally {
+        this.loading = false
+      }
+    },
+    normaliseCase(row) {
+      const categories = Array.isArray(row.categories) ? row.categories : []
+      return {
+        id: row.id,
+        caseNumber: row.caseNum || '—',
+        title: row.title || 'Untitled case',
+        categoryLabel: categories.length ? categories.join(', ') : 'Uncategorised',
+        status: (row.status || '').toLowerCase(),
+        hearingAt: row.hearingAt || null,
+        createdAt: row.createdAt || null,
+        updatedAt: row.updatedAt || null,
+        owner: row.lawyerId ? `Lawyer #${row.lawyerId}` : 'Unassigned'
+      }
+    },
+    applySorting() {
+      const { prop, order } = this.sortState
+      let data = [...this.rawData]
+      if (prop && order) {
+        const direction = order === 'ascending' ? 1 : -1
+        data.sort((a, b) => {
+          const left = a[prop]
+          const right = b[prop]
+          if (left === right) return 0
+          if (!left) return -direction
+          if (!right) return direction
+          if (left > right) return direction
+          if (left < right) return -direction
+          return 0
+        })
+      }
+      this.tableData = data
+    },
+    onSortChange({ prop, order }) {
+      if (!order) {
+        this.sortState = { prop: '', order: '' }
+      } else {
+        this.sortState = { prop, order }
+      }
+      this.applySorting()
+    },
     onPageSizeChange(size) {
       this.pagination.pageSize = size
       this.pagination.page = 1
@@ -270,156 +266,196 @@ export default {
       this.pagination.page = page
       this.fetchCases()
     },
-
-    statusFormat(row) {
-      const map = { active: 'Active', closed: 'Closed' }
-      return map[row.status] || row.status
+    resetFilters() {
+      this.filters = { title: '', category: null, status: '' }
+      this.pagination.page = 1
+      this.fetchCases()
     },
-
-    goDetail(row) { this.$router.push(`/cases/${row.id}`) },
-
-    async deleteRow(row) {
-    await this.$confirm(`Delete case "${row.title}" ?`, 'Confirm', { type: 'warning' })
-    await removeCase(row.id)
-    this.$message.success('Deleted')
-    this.fetchCases()
-},
-
-    // ===== Create =====
-    openCreate() {
-      this.createDlg.visible = true
+    statusFormat(status) {
+      if (!status) return ''
+      return status.charAt(0).toUpperCase() + status.slice(1)
     },
-    resetCreateForm() {
-      this.$refs.createForm && this.$refs.createForm.resetFields()
-      this.createDlg.form = { title: '', caseNum: '', description: '', status: 'OPEN', hearingAt: null, categoryIds: [] }
-    },
-    submitCreate() {
-      this.$refs.createForm.validate(async valid => {
-        if (!valid) return
-        try {
-          const body = {
-            title: this.createDlg.form.title,
-            caseNum: this.createDlg.form.caseNum,
-            description: this.createDlg.form.description,
-            status: this.createDlg.form.status,
-            hearingAt: this.createDlg.form.hearingAt
-              ? new Date(this.createDlg.form.hearingAt).toISOString()
-              : null
-          }
-          const ids = this.createDlg.form.categoryIds
-          await createCase(body, ids)
-          this.$message.success('Created')
-          this.createDlg.visible = false
-          this.resetCreateForm()
-          this.fetchCases()
-        } catch {
-          this.$message.error('Create failed')
-        }
-      })
-    },
-
-    // ===== Edit dialog=====
-    async openEdit(row) {
-  try {
-    const d = await getCase(row.id)
-    if (!d) {
-      this.$message.error('Empty response')
-      return
-    }
-
-    var categoryIds = []
-    if (d.categories && d.categories.length) {
-      for (var i = 0; i < d.categories.length; i++) {
-        var item = d.categories[i]
-        if (item && item.id != null) {
-          categoryIds.push(item.id)
-        }
+    statusType(status) {
+      const map = {
+        active: 'success',
+        closed: 'info',
+        draft: 'warning'
       }
-    }
-
-    var title = ''
-    if (d.title) title = d.title
-
-    var caseNum = ''
-    if (d.caseNum) caseNum = d.caseNum
-    if (!caseNum && d.caseNumber) caseNum = d.caseNumber   // 兜底
-
-    var description = ''
-    if (d.description) description = d.description
-
-    var status = 'OPEN'
-    if (d.status) status = d.status   // OPEN/CLOSED
-
-    var hearingAt = null
-    if (d.hearingAt) {
-      var iso = String(d.hearingAt).replace(' ', 'T')
-      hearingAt = new Date(iso)
-    }
-
-    this.editDlg.form = {
-      id: d.id || null,
-      title: title,
-      caseNum: caseNum,
-      description: description,
-      status: status,
-      hearingAt: hearingAt,
-      categoryIds: categoryIds
-    }
-
-    this.editDlg.visible = true
-  } catch (e) {
-    this.$message.error('Load detail failed')
-  }
-},
-    resetEditForm() {
-      this.$refs.editForm && this.$refs.editForm.resetFields()
-      this.editDlg.form = { id: null, title: '', caseNum: '', description: '', status: 'OPEN', hearingAt: null, categoryIds: [] }
+      return map[status] || 'info'
     },
-    submitEdit() {
-      this.$refs.editForm.validate(async valid => {
-        if (!valid) return
-        try {
-          const id = this.editDlg.form.id
-          const body = {
-            title: this.editDlg.form.title,
-            caseNum: this.editDlg.form.caseNum,
-            description: this.editDlg.form.description,
-            status: this.editDlg.form.status,
-            hearingAt: this.editDlg.form.hearingAt
-              ? new Date(this.editDlg.form.hearingAt).toISOString()
-              : null
-          }
-          const ids = this.editDlg.form.categoryIds
-          await updateCase(id, body, ids)
-          this.$message.success('Updated')
-          this.editDlg.visible = false
-          this.resetEditForm()
-          this.fetchCases()
-        } catch {
-          this.$message.error('Update failed')
-        }
-      })
+    formatDateTime(value) {
+      if (!value) return '?'
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '?'
+      return dateTimeFormatter.format(date)
     },
-
-    namesToIds(names) {
-      if (!names || !names.length) return []
-      const dict = new Map(this.categoryOptions.map(o => [String(o.label).toLowerCase(), o.value]))
-      return names.map(n => dict.get(String(n).toLowerCase())).filter(Boolean)
+    goDetail(row) {
+      this.$router.push(`/cases/${row.id}`)
+    },
+    goCreate() {
+      this.$router.push('/cases/new')
     }
   }
 }
 </script>
 
 <style scoped>
-.list_container { padding: 16px 2vw; }
-.toolbar { display:flex; gap:16px; align-items:flex-end; flex-wrap: wrap; }
-.toolbar_item { display:flex; flex-direction:column; gap:6px; }
-.toolbar_label { font-size:12px; color:#64748b; }
-.toolbar_actions { display:flex; gap:8px; align-items:center; }
-.divider { height:1px; background:#eee; margin:12px 0; }
-.actions { margin-bottom:12px; }
-.table { width:100%; }
-.link { color:#3b82f6; cursor:pointer; text-decoration: underline; }
-.link:hover { opacity:.85; }
-.pagination { display:flex; justify-content:flex-end; margin-top:12px; }
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 36px 48px;
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+}
+
+.page_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.page_headline h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.page_subtitle {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.card_header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.card_hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.metrics_grid { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; }
+
+.metric_card { flex: 1 1 220px; min-width: 220px; background: rgba(79, 70, 229, 0.06); border: 1px solid rgba(79, 70, 229, 0.18); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+
+.metric_label {
+  font-size: 12px;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metric_value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.metric_hint {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.filter_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.toolbar_item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toolbar_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.filter_actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action_buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table_card {
+  gap: 24px;
+}
+
+.data_table {
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+::v-deep(.data_table .el-table__header-wrapper th) {
+  background: rgba(99, 102, 241, 0.08);
+  color: #1f2937;
+  font-weight: 600;
+}
+
+::v-deep(.data_table .el-table__row:hover > td) {
+  background: rgba(79, 70, 229, 0.08) !important;
+}
+
+.table_footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.link {
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: #312e81;
+}
+
+@media (max-width: 1024px) {
+  .page {
+    padding: 24px;
+  }
+  .page_header {
+    flex-direction: column;
+  }
+  .filter_actions {
+    flex-wrap: wrap;
+  }
+}
 </style>
+
+
+

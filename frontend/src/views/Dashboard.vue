@@ -1,248 +1,818 @@
 <template>
-    <div class="dashboard_container">
-        <div class="left">
-            <el-card class="recent_cases" shadow="hover">
-                <h3 class="card_title">Recent Cases</h3>
-                <div class="case_list">
-                    <el-card v-for="c in recentCases" :key="c.id" class="case_item" shadow="never">
-                        <div class="case_title">
-                            <span class="link" @click="goDetail(c)">{{ c.title }}</span>
-                        </div>
-                        <div class="case_info">
-                            <span class="case_no">No. {{ c.caseNumber }}</span>
-                            <span class="case_category">{{ c.category }}</span>
-                            <span :class="['status', c.status]">{{ c.status }}</span>
-                        </div>
-                    </el-card>
+    <div class="dashboard">
+        <section class="overview_grid">
+            <el-card
+                v-for="stat in overviewStats"
+                :key="stat.id"
+                class="overview_card"
+                shadow="hover"
+            >
+                <div class="overview_header">
+                    <span class="overview_label">{{ stat.label }}</span>
+                    <el-tag v-if="stat.badge" :type="stat.badgeType" size="small">{{ stat.badge }}</el-tag>
+                </div>
+                <div class="overview_value">{{ stat.value }}</div>
+                <div class="overview_meta">
+                    <span :class="['overview_change', changeClass(stat.change)]">{{ stat.change }}</span>
+                    <span class="overview_hint">{{ stat.hint }}</span>
                 </div>
             </el-card>
-        </div>
+        </section>
 
-        <div class="right">
-            <el-card class="hearing_calendar" shadow="hover">
-                <h3 class="card_title">Hearing Calendar</h3>
-                <el-calendar v-model="calendarDate">
-                    <template slot="dateCell" slot-scope="{ data }">
-                        <div class="calendar-cell" :class="{ hearing: hasHearing(data.day) }">
-                            {{ data.day.split('-').slice(2).join('') }}
+        <section class="content_grid">
+            <div class="column left">
+                <el-card class="panel recent_panel" shadow="hover">
+                    <div class="panel_header">
+                        <h3>Recent Cases</h3>
+                        <el-button type="text" @click="$router.push('/cases')">View all</el-button>
+                    </div>
+                    <div class="case_list">
+                        <div
+                            v-for="caseItem in recentCases"
+                            :key="caseItem.id"
+                            class="case_row"
+                        >
+                            <div class="case_title" @click="goDetail(caseItem)">{{ caseItem.title }}</div>
+                            <div class="case_meta">
+                                <span class="case_number">No. {{ caseItem.caseNumber }}</span>
+                                <span class="case_category">{{ caseItem.category }}</span>
+                                <el-tag :type="statusType(caseItem.status)" size="mini" effect="plain">{{ formatStatus(caseItem.status) }}</el-tag>
+                            </div>
+                            <div class="case_deadline">
+                                <span>{{ caseItem.nextStep }}</span>
+                                <span class="case_due">Due {{ caseItem.due }}</span>
+                            </div>
                         </div>
-                    </template>
-                </el-calendar>
-            </el-card>
-        </div>
+                    </div>
+                </el-card>
+
+                <el-card class="panel workload_panel" shadow="hover">
+                    <div class="panel_header">
+                        <h3>Team Workload</h3>
+                        <span class="panel_hint">Load vs. band target</span>
+                    </div>
+                    <div class="workload_list">
+                        <div
+                            v-for="area in practiceAreas"
+                            :key="area.name"
+                            class="workload_row"
+                        >
+                            <div class="workload_meta">
+                                <span class="workload_name">{{ area.name }}</span>
+                                <span class="workload_trend" :class="{ positive: area.trend.startsWith('+'), negative: area.trend.startsWith('-') }">{{ area.trend }}</span>
+                            </div>
+                            <el-progress :percentage="area.percentage" :stroke-width="8" :color="area.color" />
+                        </div>
+                    </div>
+                    <div class="task_list">
+                        <div
+                            v-for="task in priorityTasks"
+                            :key="task.id"
+                            class="task_row"
+                        >
+                            <div>
+                                <div class="task_title">{{ task.title }}</div>
+                                <div class="task_meta">
+                                    <span>{{ task.owner }}</span>
+                                    <span>Due {{ task.due }}</span>
+                                </div>
+                            </div>
+                            <el-tag :type="task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'warning' : 'info'" size="mini">{{ task.priority }}</el-tag>
+                        </div>
+                    </div>
+                </el-card>
+            </div>
+
+            <div class="column right">
+                <el-card class="panel calendar_panel" shadow="hover">
+                    <div class="calendar_header">
+                        <div class="calendar_title">
+                            <h3>Hearing Calendar</h3>
+                            <span class="panel_hint">Keep track of upcoming court appearances</span>
+                        </div>
+                        <div class="calendar_controls">
+                            <el-button circle size="mini" icon="el-icon-arrow-left" @click="changeMonth(-1)"></el-button>
+                            <span class="calendar_month">{{ calendarMonth }}</span>
+                            <el-button circle size="mini" icon="el-icon-arrow-right" @click="changeMonth(1)"></el-button>
+                        </div>
+                    </div>
+                    <el-calendar v-model="calendarDate">
+                        <template slot="dateCell" slot-scope="{ data }">
+                            <div
+                                :class="[
+                                    'calendar_cell',
+                                    {
+                                        hearing: data.type === 'current-month' && hasHearing(data.day),
+                                        today: isToday(data.day),
+                                        weekend: isWeekend(data.day),
+                                        current: data.type === 'current-month',
+                                        'other-month': data.type !== 'current-month'
+                                    }
+                                ]"
+                            >
+                                <span class="calendar_day">{{ data.day.split('-').slice(2).join('') }}</span>
+                                <span v-if="hasHearing(data.day)" class="calendar_dot"></span>
+                            </div>
+                        </template>
+                    </el-calendar>
+                </el-card>
+            </div>
+        </section>
     </div>
 </template>
 
 <script>
 import { listCases } from '@/api/cases'
 
+const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+const weekdayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
+const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' })
+const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+const palette = ['#2563eb', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6']
+
+const toLocalDate = value => {
+    if (!value) return null
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) return parsed
+    return new Date(`${value}T00:00:00`)
+}
+
+const startOfMonth = (reference, offset = 0) => new Date(reference.getFullYear(), reference.getMonth() + offset, 1)
+const endOfMonth = (reference, offset = 0) => new Date(reference.getFullYear(), reference.getMonth() + offset + 1, 1)
+const isBetween = (value, start, end) => value && value >= start && value < end
+const isSameDay = (value, reference) => value &&
+    value.getFullYear() === reference.getFullYear() &&
+    value.getMonth() === reference.getMonth() &&
+    value.getDate() === reference.getDate()
+const percentChange = (current, previous) => {
+    if (!previous && !current) return '0%'
+    if (!previous) return current ? '+100%' : '0%'
+    const diff = current - previous
+    const pct = (diff / previous) * 100
+    if (!Number.isFinite(pct)) return diff >= 0 ? '+100%' : '-100%'
+    const sign = pct >= 0 ? '+' : ''
+    return `${sign}${pct.toFixed(1)}%`
+}
+const diffInDays = (target, reference) => {
+    if (!target) return null
+    const start = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate())
+    const normalizedTarget = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+    return Math.round((normalizedTarget - start) / (24 * 60 * 60 * 1000))
+}
+const computePriority = diff => {
+    if (diff === null) return 'Low'
+    if (diff < 0) return 'High'
+    if (diff <= 3) return 'High'
+    if (diff <= 7) return 'Medium'
+    return 'Low'
+}
+const ensureArray = value => (Array.isArray(value) ? value : [])
+
 export default {
-  name: 'Dashboard',
-  data() {
-    return {
-      recentCases: [],
-      hearings: [],
-      calendarDate: new Date(),
-      loading: false
+    name: 'Dashboard',
+    data() {
+        return {
+            overviewStats: [],
+            recentCases: [],
+            practiceAreas: [],
+            priorityTasks: [],
+            upcomingHearings: [],
+            calendarDate: new Date(),
+            allCases: [],
+            loading: false
+        }
+    },
+    created() {
+        this.fetchDashboardData()
+    },
+    computed: {
+        calendarMonth() {
+            return monthFormatter.format(this.calendarDate)
+        }
+    },
+    methods: {
+        async fetchDashboardData() {
+            this.loading = true
+            try {
+                const response = await listCases({ pageNo: 1, pageSize: 500 })
+                const records = response && Array.isArray(response.records)
+                    ? response.records
+                    : []
+                const normalised = records.map(item => ({
+                    ...item,
+                    status: (item.status || '').toLowerCase()
+                }))
+                this.allCases = normalised
+                const meta = response && response.summary ? response.summary : null
+                this.buildOverviewStats(normalised, meta)
+                this.buildRecentCases(normalised)
+                this.buildPracticeAreas(normalised)
+                this.buildSchedulingInsights(normalised)
+            } catch (error) {
+                // surface the failure but keep the dashboard usable
+                // eslint-disable-next-line no-console
+                console.error('Failed to load dashboard data', error)
+                if (this.$message && this.$message.error) {
+                    this.$message.error('Failed to load dashboard data')
+                }
+            } finally {
+                this.loading = false
+            }
+        },
+        buildOverviewStats(cases, meta) {
+            const now = new Date()
+            const thisMonthStart = startOfMonth(now)
+            const nextMonthStart = endOfMonth(now)
+            const lastMonthStart = startOfMonth(now, -1)
+
+            const activeCases = cases.filter(item => item.status === 'active')
+            const closedCases = cases.filter(item => item.status === 'closed')
+
+            const activeUpdatedThisMonth = activeCases.filter(item => {
+                const updatedAt = toLocalDate(item.updatedAt)
+                return isBetween(updatedAt, thisMonthStart, nextMonthStart)
+            }).length
+            const activeUpdatedLastMonth = activeCases.filter(item => {
+                const updatedAt = toLocalDate(item.updatedAt)
+                return isBetween(updatedAt, lastMonthStart, thisMonthStart)
+            }).length
+
+            const hearingsThisMonth = cases.filter(item => {
+                const hearing = toLocalDate(item.hearingAt)
+                return isBetween(hearing, thisMonthStart, nextMonthStart)
+            })
+            const hearingsLastMonth = cases.filter(item => {
+                const hearing = toLocalDate(item.hearingAt)
+                return isBetween(hearing, lastMonthStart, thisMonthStart)
+            })
+            const hearingsToday = hearingsThisMonth.filter(item => isSameDay(toLocalDate(item.hearingAt), now))
+
+            const closedUpdatedThisMonth = closedCases.filter(item => {
+                const updatedAt = toLocalDate(item.updatedAt)
+                return isBetween(updatedAt, thisMonthStart, nextMonthStart)
+            }).length
+            const closedUpdatedLastMonth = closedCases.filter(item => {
+                const updatedAt = toLocalDate(item.updatedAt)
+                return isBetween(updatedAt, lastMonthStart, thisMonthStart)
+            }).length
+
+            const summaryTotals = meta || {}
+            const totalCases = summaryTotals.total != null ? summaryTotals.total : cases.length
+            const activeCount = summaryTotals.active != null ? summaryTotals.active : activeCases.length
+            const closedCount = summaryTotals.closed != null ? summaryTotals.closed : closedCases.length
+            const upcomingCount = summaryTotals.upcoming != null ? summaryTotals.upcoming : hearingsThisMonth.length
+            const slaRate = totalCases ? Math.round((closedCount / totalCases) * 100) : 0
+
+            this.overviewStats = [
+                {
+                    id: 'active',
+                    label: 'Active Cases',
+                    value: activeCount,
+                    change: percentChange(activeUpdatedThisMonth, activeUpdatedLastMonth),
+                    hint: `${activeUpdatedThisMonth} active case updates this month`,
+                    badge: activeCases.length ? 'On track' : '',
+                    badgeType: activeCases.length ? 'success' : ''
+                },
+                {
+                    id: 'hearings',
+                    label: 'Hearings this month',
+                    value: upcomingCount,
+                    change: percentChange(hearingsThisMonth.length, hearingsLastMonth.length),
+                    hint: `${hearingsToday.length} scheduled for today`,
+                    badge: upcomingCount > hearingsLastMonth.length ? 'Busy' : '',
+                    badgeType: hearingsThisMonth.length > hearingsLastMonth.length ? 'warning' : ''
+                },
+                {
+                    id: 'tasks',
+                    label: 'Tasks due today',
+                    value: hearingsToday.length,
+                    change: hearingsToday.length ? '+100%' : '0%',
+                    hint: 'Based on upcoming hearings',
+                    badge: '',
+                    badgeType: ''
+                },
+                {
+                    id: 'sla',
+                    label: 'SLA compliance',
+                    value: totalCases ? `${slaRate}%` : 'N/A',
+                    change: percentChange(closedUpdatedThisMonth, closedUpdatedLastMonth),
+                    hint: `${closedCount} closed cases recorded`,
+                    badge: slaRate >= 80 ? 'Great' : '',
+                    badgeType: slaRate >= 80 ? 'success' : slaRate >= 50 ? 'info' : 'danger'
+                }
+            ]
+        },
+        buildRecentCases(cases) {
+            const items = [...cases].sort((a, b) => {
+                const aDate = toLocalDate(a.updatedAt) || 0
+                const bDate = toLocalDate(b.updatedAt) || 0
+                return bDate - aDate
+            }).slice(0, 4)
+
+            this.recentCases = items.map(item => {
+                const hearing = toLocalDate(item.hearingAt)
+                const categories = ensureArray(item.categories)
+                return {
+                    id: item.id,
+                    caseNumber: item.caseNum || 'N/A',
+                    title: item.title,
+                    category: categories.length ? categories[0] : 'Uncategorised',
+                    status: item.status || 'draft',
+                    nextStep: item.description ? item.description.slice(0, 80) : 'No notes provided',
+                    due: hearing ? formatter.format(hearing) : 'TBD'
+                }
+            })
+        },
+        buildPracticeAreas(cases) {
+            const counts = new Map()
+            cases.forEach(item => {
+                ensureArray(item.categories).forEach(name => {
+                    counts.set(name, (counts.get(name) || 0) + 1)
+                })
+            })
+
+            const entries = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])
+            const max = entries.length ? entries[0][1] : 0
+            const total = entries.reduce((sum, [, count]) => sum + count, 0)
+            const average = entries.length ? total / entries.length : 0
+
+            this.practiceAreas = entries.map(([name, count], index) => {
+                const delta = count - average
+                return {
+                    name,
+                    percentage: max ? Math.round((count / max) * 100) : 0,
+                    trend: delta === 0 ? '0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}`,
+                    color: palette[index % palette.length]
+                }
+            })
+        },
+        buildSchedulingInsights(cases) {
+            const now = new Date()
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+            const upcoming = cases
+                .map(item => {
+                    const hearing = toLocalDate(item.hearingAt)
+                    return {
+                        item,
+                        hearing
+                    }
+                })
+                .filter(entry => entry.hearing && entry.hearing >= todayStart)
+                .sort((a, b) => a.hearing - b.hearing)
+
+            this.priorityTasks = upcoming.slice(0, 3).map(entry => {
+                const { item, hearing } = entry
+                const diff = diffInDays(hearing, now)
+                return {
+                    id: item.id,
+                    title: item.title,
+                    owner: item.lawyerId ? `Lawyer #${item.lawyerId}` : 'Unassigned',
+                    due: formatter.format(hearing),
+                    priority: computePriority(diff)
+                }
+            })
+
+            this.upcomingHearings = upcoming.slice(0, 6).map(entry => {
+                const { item, hearing } = entry
+                return {
+                    id: item.id,
+                    date: hearing.toISOString().split('T')[0],
+                    title: item.title,
+                    time: timeFormatter.format(hearing),
+                    location: '',
+                    judge: '',
+                    stage: this.formatStatus(item.status)
+                }
+            })
+        },
+        goDetail(caseItem) {
+            this.$router.push(`/cases/${caseItem.id}`)
+        },
+        navigate(to) {
+            if (to) {
+                this.$router.push(to)
+            }
+        },
+        hasHearing(day) {
+            return this.upcomingHearings.some(h => h.date === day)
+        },
+        changeMonth(step) {
+            const next = new Date(this.calendarDate)
+            next.setMonth(next.getMonth() + step)
+            this.calendarDate = next
+        },
+        isToday(day) {
+            const value = toLocalDate(day)
+            const today = new Date()
+            return value &&
+                value.getFullYear() === today.getFullYear() &&
+                value.getMonth() === today.getMonth() &&
+                value.getDate() === today.getDate()
+        },
+        isWeekend(day) {
+            const value = toLocalDate(day)
+            if (!value) return false
+            const weekday = value.getDay()
+            return weekday === 0 || weekday === 6
+        },
+        formatDay(date) {
+            const value = toLocalDate(date)
+            return value ? formatter.format(value) : ''
+        },
+        formatWeekday(date) {
+            const value = toLocalDate(date)
+            return value ? weekdayFormatter.format(value) : ''
+        },
+        statusType(status) {
+            const map = {
+                active: 'success',
+                pending: 'warning',
+                draft: 'info',
+                closed: 'info'
+            }
+            return map[status] || 'info'
+        },
+        formatStatus(status) {
+            if (!status) return ''
+            return status.charAt(0).toUpperCase() + status.slice(1)
+        },
+        changeClass(change) {
+            return change && change.startsWith('-') ? 'negative' : 'positive'
+        }
     }
-  },
-  created() {
-    this.fetchRecentCases()
-  },
-  methods: {
-    async fetchRecentCases() {
-      this.loading = true
-      try {
-        var res = await listCases({ pageNo: 1, pageSize: 3 })
-        var arr = res
-        if (!Array.isArray(arr)) {
-          if (arr && Array.isArray(arr.data)) arr = arr.data
-          else if (arr && Array.isArray(arr.records)) arr = arr.records
-          else arr = []
-        }
-
-        var mapped = []
-        var hearingDays = {}
-        for (var i = 0; i < arr.length; i++) {
-          var row = arr[i]
-          var item = this.mapRow(row)
-          mapped.push(item)
-          if (row.hearingAt) {
-            var day = this.onlyDate(row.hearingAt)
-            if (day) hearingDays[day] = true
-          }
-        }
-        this.recentCases = mapped
-
-        var hs = []
-        for (var d in hearingDays) {
-          if (hearingDays.hasOwnProperty(d)) hs.push({ date: d })
-        }
-        this.hearings = hs
-      } catch (e) {
-        this.$message.error('Failed to load recent cases')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    mapRow: function(row) {
-      var categoryText = '—'
-      if (row.categories && row.categories.length) {
-        categoryText = row.categories.join(', ')
-      }
-
-      var statusText = 'draft'
-      if (row.status === 'OPEN') statusText = 'active'
-      else if (row.status === 'CLOSED') statusText = 'closed'
-
-      var caseNo = ''
-      if (row.caseNum) caseNo = row.caseNum
-      if (!caseNo && row.caseNumber) caseNo = row.caseNumber
-
-      var hearingText = '—'
-      if (row.hearingAt) {
-        hearingText = row.hearingAt.replace('T', ' ').slice(0, 16)
-      }
-
-      var titleText = ''
-      if (row.title) titleText = row.title
-
-      return {
-        id: row.id,
-        caseNumber: caseNo,
-        title: titleText,
-        category: categoryText,
-        status: statusText,
-        hearingAt: hearingText
-      }
-    },
-
-    onlyDate: function(iso) {
-      if (!iso) return ''
-      var s = String(iso)
-      var t = s.indexOf('T')
-      if (t > 0) return s.substring(0, t)
-      if (s.length >= 10) return s.substring(0, 10)
-      return ''
-    },
-
-    goDetail(c) {
-      this.$router.push(`/cases/${c.id}`)
-    },
-
-    hasHearing(day) {
-      for (var i = 0; i < this.hearings.length; i++) {
-        if (this.hearings[i].date === day) return true
-      }
-      return false
-    }
-  }
 }
 </script>
 
-
-
 <style scoped>
-.dashboard_container {
-    display: flex;
-    gap: 20px;
-    padding: 16px;
+.dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px 36px 48px;
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
 }
 
-.left {
-    flex: 1;
+.overview_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 }
 
-.right {
-    flex: 1;
+.overview_card {
+  border-radius: 20px;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 16px 32px rgba(79, 70, 229, 0.16);
+  padding: 22px 24px;
 }
 
-.card_title {
-    font-weight: 700;
-    margin-bottom: 12px;
+.overview_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #6b7280;
+  font-size: 14px;
 }
 
-.case_list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.overview_label {
+  font-weight: 600;
 }
 
-.case_item {
-    border-radius: 10px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.8);
+.overview_value {
+  font-size: 34px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.5px;
 }
 
-.case_title {
-    font-weight: 600;
-    font-size: 16px;
-    margin-bottom: 6px;
+.overview_meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #9ca3af;
 }
 
-.case_info {
-    display: flex;
-    gap: 12px;
-    font-size: 13px;
-    color: #475569;
+.overview_change {
+  font-weight: 600;
 }
 
-.status.active {
-    color: #16a34a;
-    font-weight: 600;
+.overview_change.positive {
+  color: #16a34a;
 }
 
-.status.closed {
-    color: #ef4444;
-    font-weight: 600;
+.overview_change.negative {
+  color: #dc2626;
 }
 
-.status.draft {
-    color: #f59e0b;
-    font-weight: 600;
+.content_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
 }
 
-.link {
-    color: #2563eb;
-    cursor: pointer;
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.link:hover {
-    text-decoration: underline;
+.panel {
+  border-radius: 22px;
+  border: none;
+  padding: 24px 26px;
+  background: #ffffff;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
-.hearing_calendar {
-    border-radius: 12px;
-}
-
-.calendar-cell {
-  width: 100%;
-  height: 100%;
+.panel_header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background 0.3s;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-.calendar-cell.hearing {
-  background: rgba(16, 185, 129, 0.3); 
-  font-weight: bold;
-  color: #065f46;
+.panel_header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
 }
 
-.calendar-cell.hearing:hover {
-  background: rgba(16, 185, 129, 0.6);
+.panel_header .el-button {
+  padding: 0;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.panel_hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.case_list,
+.workload_list,
+.task_list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.case_row {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fbfcff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.case_row:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.12);
   cursor: pointer;
 }
 
-.dot {
-    width: 6px;
-    height: 6px;
-    background: #f43f5e;
-    border-radius: 50%;
-    position: absolute;
-    bottom: 4px;
+.case_title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.case_meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.case_deadline {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.case_due {
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.workload_row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2ff;
+}
+
+.workload_row:last-child {
+  border-bottom: none;
+}
+
+.workload_meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #374151;
+}
+
+.workload_trend {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workload_trend.positive {
+  color: #22c55e;
+}
+
+.workload_trend.negative {
+  color: #ef4444;
+}
+
+.task_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid #eef2ff;
+}
+
+.task_row:first-child {
+  border-top: none;
+}
+
+.task_title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.task_meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.quick_links {
+  width: 100%;
+}
+
+
+.quick_card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(99, 102, 241, 0.15);
+}
+
+@media (max-width: 1024px) {
+  .dashboard {
+    padding: 24px;
+  }
+
+  .content_grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+.calendar_panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.calendar_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 26px 12px;
+}
+
+.calendar_title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar_title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.calendar_controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar_controls .el-button {
+  min-width: 32px;
+
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.18);
+  border: none;
+  color: #4f46e5;
+}
+
+.calendar_controls .el-button:hover {
+  color: #312e81;
+}
+
+.calendar_month {
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 140px;
+  text-align: center;
+}
+
+.calendar_panel ::v-deep(.el-calendar__header) {
+  display: none;
+}
+
+.calendar_title .panel_hint {
+  margin-top: 2px;
+}
+
+.calendar_panel ::v-deep(.el-calendar__body) {
+  padding: 0 26px 26px;
+}
+
+.calendar_panel ::v-deep(.el-calendar__row) {
+  margin-bottom: 6px;
+}
+
+.calendar_cell {
+  position: relative;
+  width: 100%;
+  height: 72px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 10px;
+  border-radius: 12px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.calendar_cell.weekend {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.calendar_cell.current {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.calendar_cell.other-month {
+  opacity: 0.45;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+}
+
+.calendar_cell.other-month:hover {
+  transform: none;
+  background: transparent;
+}
+
+.calendar_cell.today {
+  border: 2px solid #4f46e5;
+  background: rgba(79, 70, 229, 0.24);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16);
+}
+
+.calendar_cell.today .calendar_day {
+  color: #1f1b58;
+}
+
+.calendar_cell.hearing {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.calendar_cell.hearing.today {
+  background: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+}
+
+.calendar_cell:hover {
+  transform: translateY(-2px);
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.calendar_day {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.calendar_dot {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
 }
 </style>

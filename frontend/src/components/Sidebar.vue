@@ -1,86 +1,390 @@
 <template>
-  <el-aside :width="collapsed ? '64px' : '220px'" class="lcms-aside">
-    <el-menu
-      router
-      :collapse="collapsed"
-      :default-active="$route.path"
-      background-color="transparent"
-      text-color="#e9eef5"
-      active-text-color="#fff"
-      class="lcms-menu"
-    > 
+  <aside :class="['sidebar-shell', { collapsed }]">
+    <div :class="['sidebar', { collapsed }]">
+      <header class="sidebar-header">
+        <button class="profile" type="button" @click="goDashboard">
+          <span class="profile-avatar">{{ user.initials }}</span>
+          <span v-if="!collapsed" class="profile-copy">
+            <span class="profile-name">{{ user.name }}</span>
+            <span class="profile-role">{{ user.role }}</span>
+          </span>
+        </button>
+        <button class="collapse-toggle" type="button" @click="toggle">
+          <i :class="collapsed ? 'el-icon-arrow-right' : 'el-icon-arrow-left'"></i>
+        </button>
+      </header>
 
-    <el-menu-item index="/dashboard">
-        <i class="el-icon-data-analysis"></i>
-        <span class='font-size' slot="title">Dashboard</span>
-      </el-menu-item>
+      <nav class="nav">
+        <el-menu
+          :collapse="collapsed"
+          :collapse-transition="false"
+          :default-active="activePath"
+          background-color="transparent"
+          class="nav-menu"
+          text-color="#67728c"
+          active-text-color="#ffffff"
+          @select="handleSelect"
+        >
+          <el-menu-item
+            v-for="item in navItems"
+            :key="item.id"
+            :index="item.path"
+            class="nav-item"
+            :title="collapsed ? item.label : null"
+          >
+            <i :class="item.icon"></i>
+            <span slot="title" class="nav-label">{{ item.label }}</span>
+          </el-menu-item>
+        </el-menu>
+      </nav>
 
-      <el-menu-item index="/categories">
-        <i class="el-icon-collection"></i>
-        <span class='font-size' slot="title">Categories</span>
-      </el-menu-item>
-
-      <el-menu-item index="/cases">
-        <i class="el-icon-s-order"></i>
-        <span class='font-size' slot="title">Cases</span>
-      </el-menu-item>
-
-      <el-menu-item index="/evidence">
-        <i class="el-icon-document"></i>
-        <span class='font-size' slot="title">Evidences</span>
-      </el-menu-item>
-
-      <el-menu-item index="/hearings">
-        <i class="el-icon-reading"></i>
-        <span class='font-size' slot="title">Hearings</span>
-      </el-menu-item>
-
-    </el-menu>
-        <div class="collapse-ctl" @click="toggle">
-      <i :class="collapsed ? 'el-icon-arrow-right' : 'el-icon-arrow-left'"></i>
+      <footer class="sidebar-footer">
+        <button class="logout" type="button" @click="logout">
+          <i class="el-icon-switch-button"></i>
+          <span v-if="!collapsed">Logout</span>
+        </button>
+      </footer>
     </div>
-  </el-aside>
+  </aside>
 </template>
 
 <script>
+
+const decodeJwt = token => {
+
+  try {
+
+    const [, payload] = token.split('.')
+
+    if (!payload) return null
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+
+    const padLength = (4 - (base64.length % 4 || 4)) % 4
+
+    const padded = base64 + '='.repeat(padLength)
+
+    const atobImpl = (() => {
+
+      if (typeof window !== 'undefined' && typeof window.atob === 'function') {
+
+        return window.atob
+
+      }
+
+      if (typeof self !== 'undefined' && typeof self.atob === 'function') {
+
+        return self.atob
+
+      }
+
+      return null
+
+    })()
+
+    if (!atobImpl) return null
+
+    const binary = atobImpl(padded)
+
+    const json = decodeURIComponent(binary.split('').map(ch => `%${`00${ch.charCodeAt(0).toString(16)}`.slice(-2)}`).join(''))
+
+    return JSON.parse(json)
+  } catch (error) {
+
+    return null
+  }
+
+}
+
+const computeInitials = name => {
+  if (!name) return '??'
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+  return letters || '??'
+}
+
+const formatStatus = status => {
+  if (!status) return ''
+  const lower = status.toLowerCase()
+  return lower.charAt(0).toUpperCase() + lower.slice(1)
+}
+
 export default {
   name: 'Sidebar',
   props: { value: { type: Boolean, default: false } },
   data() {
-    return { collapsed: this.value }
+    return {
+      collapsed: this.value,
+      user: {
+        initials: '??',
+        name: 'Loading user',
+        role: ''
+      },
+      navItems: [
+        { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: 'el-icon-data-analysis' },
+        { id: 'categories', path: '/categories', label: 'Categories', icon: 'el-icon-collection' },
+        { id: 'cases', path: '/cases', label: 'Cases', icon: 'el-icon-s-order' },
+        { id: 'evidence', path: '/evidence', label: 'Evidence', icon: 'el-icon-document' },
+        { id: 'hearings', path: '/hearings', label: 'Hearings', icon: 'el-icon-reading' }
+      ]
+    }
   },
   watch: {
     value(v) { this.collapsed = v },
     collapsed(v) { this.$emit('input', v) }
   },
+  computed: {
+    activePath() {
+      const current = this.$route.path
+      const match = this.navItems.find(item => current.startsWith(item.path))
+      return match ? match.path : current
+    }
+  },
+  created() {
+    this.loadUserProfile()
+  },
   methods: {
-    toggle() { this.collapsed = !this.collapsed }
+    toggle() {
+      this.collapsed = !this.collapsed
+    },
+    handleSelect(path) {
+      if (path) {
+        this.$router.push(path)
+      }
+    },
+    logout() {
+      this.$emit('logout')
+      this.$router.push('/logout')
+    },
+    goDashboard() {
+      this.$router.push('/dashboard')
+    },
+    loadUserProfile() {
+      const token = localStorage.getItem('jwt')
+      if (!token) return
+      const payload = decodeJwt(token)
+      if (!payload) return
+      const displayName =
+        payload.fullName ||
+        [payload.firstName, payload.lastName].filter(Boolean).join(' ') ||
+        payload.name ||
+        payload.email ||
+        'Your profile'
+      this.user.name = displayName
+      this.user.initials = computeInitials(displayName)
+      const statusSource = payload.role || payload.status || payload.userType
+      this.user.role = formatStatus(statusSource) || 'Member'
+    }
   }
 }
 </script>
 
 <style scoped>
-.collapse-ctl {
-  position: absolute; left: 0; right: 0; bottom: 100px;
-  display: flex; justify-content: center; align-items: center;
-  cursor: pointer; color: #f7f9fb; opacity: .9;
+.sidebar-shell {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 1000;
+  width: 264px;
+  transition: width 0.25s ease;
 }
-.collapse-ctl i {
-  font-size: 18px; padding: 6px 10px; border-radius: 999px;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+
+.sidebar-shell.collapsed {
+  width: 72px;
 }
-.lcms-aside {
-  height: 100vh;
-  background: rgba(41, 112, 179, 0.9);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+
+.sidebar {
+  width: 264px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: #f6f7fb;
+  border-radius: 24px;
+  padding: 24px 20px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  transition: width 0.25s ease, padding 0.25s ease;
+  overflow: visible;
+}
+
+.sidebar.collapsed {
+  width: 72px;
+  padding: 24px 12px;
+  align-items: center;
+}
+
+.sidebar-header {
   position: relative;
-  transition: width 0.3s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
 }
-.font-size {
-  color: #fff; 
-  font-family: Arial, sans-serif;
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+  flex: 1;
+  min-width: 0;
 }
-.lcms-menu {
+
+.sidebar.collapsed .profile {
+  padding: 10px;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin-right: 28px;
+}
+
+.profile-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.profile-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.profile-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.profile-role {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.collapse-toggle {
+  position: absolute;
+  top: 50%;
+  right: -18px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #6366f1;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar.collapsed .collapse-toggle {
+  right: -18px;
+}
+
+.collapse-toggle:hover {
+  background: #4f46e5;
+  box-shadow: 0 16px 30px rgba(79, 70, 229, 0.35);
+}
+
+.nav {
+  flex: 1;
+  margin-top: 28px;
+  width: 100%;
+}
+
+.nav-menu {
   border-right: none !important;
+  background: transparent;
+}
+
+.nav-menu ::v-deep(.el-menu-item) {
+  border-radius: 14px;
+  margin: 6px 0;
+  height: 46px;
+  line-height: 46px;
+  padding: 0 18px;
+  font-weight: 500;
+}
+
+.nav-menu ::v-deep(.el-menu-item:hover),
+.nav-menu ::v-deep(.el-menu-item.is-active) {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: #ffffff !important;
+}
+
+.nav-menu ::v-deep(.el-menu-item:hover i),
+.nav-menu ::v-deep(.el-menu-item.is-active i) {
+  color: #ffffff;
+}
+
+.nav-item i {
+  font-size: 18px;
+}
+
+.nav-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  width: 100%;
+  padding-top: 16px;
+}
+
+.logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: none;
+  background: #ffffff;
+  cursor: pointer;
+  color: #1f2937;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.sidebar.collapsed .logout {
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .sidebar-shell {
+    top: 16px;
+    left: 16px;
+  }
 }
 </style>
+
+
+
+
+
+
+
+
+
+
+

@@ -6,6 +6,7 @@ import AuthLayout from '@/components/AuthLayout.vue'
 
 import Home from '@/views/Home.vue'
 import CasesList from '@/views/CasesList.vue'
+import CaseForm from '@/views/CaseForm.vue'
 import HearingListCards from '@/views/Hearings.vue'
 import Categories from '@/views/Categories.vue'
 import EvidenceList from '@/views/EvidenceList.vue'
@@ -37,6 +38,7 @@ const router = new Router({
       component: MainLayout,
       children: [
         { path: 'cases', name: 'cases', component: CasesList },
+        { path: 'cases/new', name: 'caseCreate', component: CaseForm },
         { path: 'cases/:id', name: 'caseDetail', component: CaseDetail, props: true },
         { path: 'hearings', name: 'hearings', component: HearingListCards },
         { path: 'categories', name: 'categories', component: Categories },
