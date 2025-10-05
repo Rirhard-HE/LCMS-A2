@@ -17,7 +17,4 @@ public interface CasesService extends IService<Cases> {
     boolean updateWithCategories(Cases cases, List<Long> categoryIds);
 
     CaseWithCategoryListVO getCaseDetail(Long id);
-
-
-
 }

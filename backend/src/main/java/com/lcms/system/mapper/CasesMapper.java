@@ -32,9 +32,7 @@ public interface CasesMapper extends BaseMapper<Cases> {
             WHERE x.case_id = c.id AND x.category_id = #{categoryId}
           ))
       AND (#{keyword} IS NULL 
-           OR c.title LIKE CONCAT('%', #{keyword}, '%')
-           OR c.case_num LIKE CONCAT('%', #{keyword}, '%')
-           OR c.description LIKE CONCAT('%', #{keyword}, '%'))
+           OR c.title LIKE CONCAT('%', #{keyword}, '%'))
     GROUP BY c.id
     ORDER BY c.updated_at DESC
     LIMIT #{offset}, #{limit}

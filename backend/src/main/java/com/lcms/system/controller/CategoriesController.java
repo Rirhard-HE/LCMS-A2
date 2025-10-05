@@ -18,8 +18,14 @@ public class CategoriesController {
     private CategoriesService categoriesService;
 
     @GetMapping
-    public List<Categories> list() {
-        return categoriesService.list();
+    public List<Categories> list(@RequestParam(required = false) String name) {
+        if (name != null && !name.isEmpty()) {
+            return categoriesService.lambdaQuery()
+                    .like(Categories::getName, name)
+                    .list();
+        } else {
+            return categoriesService.list();
+        }
     }
 
     @GetMapping("/{id}")

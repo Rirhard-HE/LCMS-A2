@@ -1,8 +1,10 @@
 package com.lcms.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.lcms.system.entity.Cases;
 import com.lcms.system.entity.Evidence;
 import com.lcms.system.security.SecurityUtil;
+import com.lcms.system.service.CasesService;
 import com.lcms.system.service.EvidenceService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Kian
@@ -35,15 +36,19 @@ public class EvidenceController {
     private EvidenceService evidenceService;
 
     @Autowired
+    private CasesService casesService;
+
+    @Autowired
     private SecurityUtil securityUtil;
 
     @GetMapping
-    public List<Evidence> list(HttpServletRequest request,
-                               @RequestParam(value = "keyword", required = false) String keyword) {
+    public List<Map<String, Object>> list(HttpServletRequest request,
+                                          @RequestParam(value = "keyword", required = false) String keyword) {
         Long lawyerId = securityUtil.getCurrentLawyerId(request);
         if (lawyerId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in");
         }
+
         QueryWrapper<Evidence> qw = new QueryWrapper<>();
         qw.eq("uploaded_by", lawyerId);
 
@@ -51,7 +56,23 @@ public class EvidenceController {
             qw.and(q -> q.like("title", keyword));
         }
 
-        return evidenceService.list(qw);
+        List<Evidence> list = evidenceService.list(qw);
+
+        return list.stream().map(e -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", e.getId());
+            map.put("title", e.getTitle());
+            map.put("description", e.getDescription());
+            map.put("fileUrl", e.getFileUrl());
+            map.put("caseId", e.getCaseId());
+
+            Cases c = casesService.getById(e.getCaseId());
+            map.put("caseNum", c != null ? c.getCaseNum() : null);
+
+            map.put("createdAt", e.getCreatedAt());
+            map.put("updatedAt", e.getUpdatedAt());
+            return map;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
