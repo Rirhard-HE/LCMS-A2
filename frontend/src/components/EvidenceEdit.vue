@@ -1,33 +1,27 @@
 <template>
-  <el-dialog
-    title="Edit Evidence"
-    :modal="false"
-    :visible.sync="visible"
-    width="560px"
-    @close="resetForm"
-  >
-    <el-form :model="form" :rules="rules" ref="formRef" label-position="top">
-      <el-form-item label="Title" prop="title">
-        <el-input v-model="form.title" maxlength="255" placeholder="Enter evidence title" />
+  <el-dialog title="Edit Evidence" :modal=false :visible.sync="visible" width="480px" @close="reset">
+    <el-form :model="form" label-width="100px">
+      <el-form-item label="Title">
+        <el-input v-model="form.title" maxlength="100" />
       </el-form-item>
 
       <el-form-item label="Description">
-        <el-input v-model="form.description" type="textarea" :rows="3" maxlength="500" />
+        <el-input type="textarea" v-model="form.description" maxlength="255" />
       </el-form-item>
 
-      <el-form-item label="Replace File (optional)">
+      <el-form-item label="Replace File">
         <el-upload
           drag
           action=""
           :auto-upload="false"
           :file-list="fileList"
-          :on-change="handleFileChange"
-          :limit="1"
-          :before-upload="beforeUpload"
+          :on-change="onFileChange"
+          :on-remove="onFileRemove"
+          accept=".pdf,.doc,.docx"
         >
           <i class="el-icon-upload"></i>
-          <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          <div class="el-upload__tip" slot="tip">Only PDF / DOC / DOCX, max 10MB</div>
+          <div class="el-upload__text">Drop file here or <em>click to select</em></div>
+          <div class="el-upload__tip">Only PDF / DOC / DOCX</div>
         </el-upload>
       </el-form-item>
     </el-form>
@@ -40,7 +34,7 @@
 </template>
 
 <script>
-import evidenceApi from '@/api/evidence'
+import evidenceApi from '@/api/evidences'
 
 export default {
   name: 'EvidenceEdit',
@@ -48,66 +42,49 @@ export default {
     return {
       visible: false,
       loading: false,
-      evidenceId: null,
-      form: {
-        title: '',
-        description: '',
-        file: null
-      },
+      form: { id: null, title: '', description: '' },
       fileList: [],
-      rules: {
-        title: [{ required: true, message: 'Title required', trigger: 'blur' }]
-      }
+      file: null
     }
   },
   methods: {
-    open(row) {
+    open(payload) {
+      this.reset()
+      this.form.id = payload.id
+      this.form.title = payload.title || ''
+      this.form.description = payload.description || ''
       this.visible = true
-      this.evidenceId = row.id
-      this.form.title = row.title || ''
-      this.form.description = row.description || ''
-      this.form.file = null
+    },
+    onFileChange(file, fileList) {
+      this.file = file.raw
+      this.fileList = fileList.slice(-1)
+    },
+    onFileRemove() {
+      this.file = null
       this.fileList = []
     },
-    resetForm() {
-      this.$refs.formRef && this.$refs.formRef.resetFields()
-      this.evidenceId = null
-      this.form = { title: '', description: '', file: null }
+    async submit() {
+      if (!this.form.id) {
+        this.$message.warning('Invalid evidence id')
+        return
+      }
+      this.loading = true
+      try {
+        await evidenceApi.updateFile(this.form.id, this.file, this.form.title, this.form.description)
+        this.$message.success('Updated')
+        this.visible = false
+        this.$emit('updated')
+      } catch (e) {
+        this.$message.error('Update failed')
+      } finally {
+        this.loading = false
+      }
+    },
+    reset() {
+      this.loading = false
+      this.form = { id: null, title: '', description: '' }
       this.fileList = []
-    },
-    handleFileChange(file, fileList) {
-      this.form.file = file.raw
-      this.fileList = fileList
-    },
-    beforeUpload(file) {
-      var ext = file.name.split('.').pop().toLowerCase()
-      var ok = ['pdf', 'doc', 'docx'].includes(ext)
-      var sizeOk = file.size / 1024 / 1024 < 10
-      if (!ok) this.$message.error('Only PDF/DOC/DOCX allowed')
-      if (!sizeOk) this.$message.error('File size must be < 10MB')
-      return ok && sizeOk
-    },
-    submit() {
-      this.$refs.formRef.validate(async valid => {
-        if (!valid) return
-        this.loading = true
-        try {
-          await evidenceApi.updateFile(
-            this.evidenceId,
-            this.form.file,               // 可为 null：只改标题/描述
-            this.form.title,
-            this.form.description
-          )
-          this.$message.success('Evidence updated')
-          this.visible = false
-          this.resetForm()
-          this.$emit('updated')          // 通知父组件刷新列表
-        } catch (e) {
-          this.$message.error('Update failed')
-        } finally {
-          this.loading = false
-        }
-      })
+      this.file = null
     }
   }
 }

@@ -49,11 +49,13 @@
       <el-table-column label="Hearing" prop="hearingAt" width="160" />
       <el-table-column label="Created At" prop="createdAt" width="160" />
 
-      <el-table-column label="Actions" min-width="200" fixed="right">
-        <template slot-scope="scope">
-          <el-button size="mini" type="success" round @click="openEdit(scope.row)">Edit</el-button>
-        </template>
-      </el-table-column>
+    <el-table-column label="Actions" min-width="260" fixed="right">
+  <template slot-scope="scope">
+    <el-button size="mini" type="primary" round @click="goDetail(scope.row)">Details</el-button>
+    <el-button size="mini" type="success" round @click="openEdit(scope.row)">Edit</el-button>
+    <el-button size="mini" type="danger" round @click="deleteRow(scope.row)">Delete</el-button>
+  </template>
+</el-table-column>
     </el-table>
 
     <!-- ====== Pagination ====== -->
@@ -138,7 +140,7 @@
 </template>
 
 <script>
-import { listCases, getCase, createCase, updateCase } from '@/api/cases'
+import { listCases, getCase, createCase, updateCase,removeCase } from '@/api/cases'
 import categoryApi from '../api/categories'
 
 export default {
@@ -195,7 +197,7 @@ export default {
       pageSize: this.pagination.pageSize
     }
     if (this.filters.category) params.categoryId = this.filters.category
-    if (this.filters.title) params.title = this.filters.title
+    if (this.filters.title) params.keyword = this.filters.title
 
     const  data= await listCases(params)
     let list = []
@@ -276,6 +278,13 @@ export default {
 
     goDetail(row) { this.$router.push(`/cases/${row.id}`) },
 
+    async deleteRow(row) {
+    await this.$confirm(`Delete case "${row.title}" ?`, 'Confirm', { type: 'warning' })
+    await removeCase(row.id)
+    this.$message.success('Deleted')
+    this.fetchCases()
+},
+
     // ===== Create =====
     openCreate() {
       this.createDlg.visible = true
@@ -333,7 +342,7 @@ export default {
 
     var caseNum = ''
     if (d.caseNum) caseNum = d.caseNum
-    if (!caseNum && d.caseNumber) caseNum = d.caseNumber   // 兜底
+    if (!caseNum && d.caseNumber) caseNum = d.caseNumber
 
     var description = ''
     if (d.description) description = d.description
