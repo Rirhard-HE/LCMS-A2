@@ -197,7 +197,7 @@ export default {
       pageSize: this.pagination.pageSize
     }
     if (this.filters.category) params.categoryId = this.filters.category
-    if (this.filters.title) params.title = this.filters.title
+    if (this.filters.title) params.keyword = this.filters.title
 
     const  data= await listCases(params)
     let list = []
@@ -342,7 +342,7 @@ export default {
 
     var caseNum = ''
     if (d.caseNum) caseNum = d.caseNum
-    if (!caseNum && d.caseNumber) caseNum = d.caseNumber   // 兜底
+    if (!caseNum && d.caseNumber) caseNum = d.caseNumber
 
     var description = ''
     if (d.description) description = d.description
