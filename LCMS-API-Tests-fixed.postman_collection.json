@@ -1,16 +1,16 @@
 {
   "info": {
     "_postman_id": "735b208f-bdf9-4f6c-952c-385dfd28540e",
-    "name": "LCMS \u2013 API Tests (Vue + Spring Boot) \u2013 FIXED",
+    "name": "LCMS API Tests (Vue + Spring Boot)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Completed collection with URLs for Cases & Evidence (localhost:8081)."
+    "description": "Postman collection for LCMS API CRUD & background jobs with JWT auth. Import this and the LCMS-Env environment."
   },
   "item": [
     {
       "name": "Auth",
       "item": [
         {
-          "name": "Login (email + password \u2192 set {{jwt}})",
+          "name": "Login",
           "event": [
             {
               "listen": "test",
