@@ -1,0 +1,423 @@
+{
+  "info": {
+    "_postman_id": "f3b9b9e2-0000-4abc-9aaa-000000000001",
+    "name": "LCMS – API Tests (Fixed)",
+    "description": "Postman collection for LCMS API CRUD & background jobs with JWT auth. Import this and the LCMS-Env environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "jwt",
+      "value": ""
+    },
+    {
+      "key": "caseId",
+      "value": "1"
+    },
+    {
+      "key": "categoryId",
+      "value": "1"
+    },
+    {
+      "key": "evidenceId",
+      "value": "1"
+    },
+    {
+      "key": "email",
+      "value": "test@example.com"
+    },
+    {
+      "key": "password",
+      "value": "123456"
+    },
+    {
+      "key": "fullName",
+      "value": "Test User"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (email + password → set {{jwt}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Token present', function(){ pm.expect(json.token || json.access_token).to.exist; });",
+                  "pm.environment.set('jwt', json.token || json.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"fullName\": \"{{fullName}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cases",
+      "item": [
+        {
+          "name": "List Cases",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK', function(){ pm.response.to.have.status(200); });",
+                  "var js = pm.response.json(); pm.test('Array or paged list', function(){ pm.expect(Array.isArray(js) || js.items).to.be.ok; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cases"
+          }
+        },
+        {
+          "name": "Get Case by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK', function(){ pm.response.to.have.status(200); });",
+                  "var js = pm.response.json(); pm.test('Matches caseId', function(){ pm.expect(js.id || js.caseId).to.eql(parseInt(pm.environment.get('caseId')) || pm.environment.get('caseId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cases/{{caseId}}"
+          }
+        },
+        {
+          "name": "Create Case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', function(){ pm.expect([200,201]).to.include(pm.response.code); });",
+                  "var js = pm.response.json(); pm.environment.set('caseId', js.id || js.caseId);",
+                  "pm.test('caseId captured', function(){ pm.expect(pm.environment.get('caseId')).to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Smith v. State\",\n  \"caseNum\": \"CASE-2025-001\",\n  \"description\": \"Alleged offense...\",\n  \"status\": \"OPEN\",\n  \"hearingAt\": \"2025-10-10T10:00:00\",\n  \"lawyerId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/cases"
+          }
+        },
+        {
+          "name": "Update Case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Updated', function(){ pm.expect([200,204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Smith v. State (updated)\",\n  \"description\": \"Updated desc\",\n  \"status\": \"IN_TRIAL\",\n  \"hearingAt\": \"2025-10-20T10:00:00\",\n  \"lawyerId\": 2\n}"
+            },
+            "url": "{{baseUrl}}/cases/{{caseId}}"
+          }
+        },
+        {
+          "name": "Delete Case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deleted/Archived', function(){ pm.expect([200,204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cases/{{caseId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categories"
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', function(){ pm.expect([200,201]).to.include(pm.response.code); });",
+                  "var js = pm.response.json(); pm.environment.set('categoryId', js.id || js.categoryId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Criminal\",\n  \"description\": \"Criminal cases\"\n}"
+            },
+            "url": "{{baseUrl}}/categories"
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Criminal Law\"\n}"
+            },
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence",
+      "item": [
+        {
+          "name": "List Evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/evidence"
+          }
+        },
+        {
+          "name": "Get Evidence by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/evidence/{{evidenceId}}"
+          }
+        },
+        {
+          "name": "Create Evidence (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "caseId",
+                  "value": "{{caseId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Passport photo scan",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/evidence"
+          }
+        },
+        {
+          "name": "Update Evidence",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": "{{baseUrl}}/evidence/{{evidenceId}}"
+          }
+        },
+        {
+          "name": "Delete Evidence",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/evidence/{{evidenceId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
