@@ -12,6 +12,8 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -53,5 +55,10 @@ public class AuthController {
         Lawyers user = lawyersService.findByEmail(req.getEmail());
         String token = jwtUtil.generateToken(user.getId(),req.getEmail());
         return new LoginResponse(token);
+    }
+
+    @GetMapping("/test")
+    public Map<String, String> test() {
+        return Map.of("status","UP");
     }
 }
