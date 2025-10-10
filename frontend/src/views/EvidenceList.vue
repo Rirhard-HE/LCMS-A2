@@ -36,7 +36,6 @@
       <el-table-column label="Case No." prop="caseNo" width="160"/>      
       <el-table-column label="Description." prop="description" width="160"/>
       <el-table-column label="Uploaded At" prop="uploadedAt" width="180"/>
-      <!-- <el-table-column label="Uploader" prop="uploader" width="120"/> -->
       <el-table-column label="Actions" min-width="200" fixed="right">
         <template slot-scope="scope">
           <el-button size="mini" round @click="openEdit(scope.row)">Edit</el-button>
