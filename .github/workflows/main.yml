@@ -73,12 +73,15 @@ jobs:
           JAR=$(ls app/*.jar | head -n 1)
           nohup java -jar "$JAR" --server.port=${BACKEND_PORT} > app.log 2>&1 &
           echo $! > app.pid
-          sleep 10
-      - name: Health check backend
+          sleep 15
+      - name: Health check backend via /login
         run: |
           for i in {1..10}; do
-            if curl -fsS "http://localhost:${BACKEND_PORT}/cases" >/dev/null; then
-              echo "Backend OK - Deployment succeeded"
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:${BACKEND_PORT}/login" \
+              -H "Content-Type: application/json" \
+              -d '{"username":"123@abc.com","password":"123456"}')
+            if [ "$RESPONSE" -eq 200 ]; then
+              echo "Backend OK - Login succeeded"
               exit 0
             fi
             echo "Waiting for backend..."
