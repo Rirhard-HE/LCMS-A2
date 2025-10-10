@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -23,6 +23,11 @@ jobs:
           cache: maven
       - name: Maven Build & Test
         run: mvn -B -DskipTests=false clean verify
+      - name: Upload backend jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
 
   frontend:
     name: Build (Frontend)
@@ -44,3 +49,47 @@ jobs:
         run: npm run lint --if-present
       - name: Build
         run: npm run build
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+  deploy-staging:
+    name: Deploy (Ephemeral Runner)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    env:
+      BACKEND_PORT: 8081
+      FRONTEND_PORT: 8080
+    steps:
+      - name: Download backend jar
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: app
+      - name: Start backend
+        run: |
+          JAR=$(ls app/*.jar | head -n 1)
+          nohup java -jar "$JAR" --server.port=${BACKEND_PORT} > app.log 2>&1 &
+          echo $! > app.pid
+          sleep 10
+      - name: Health check backend
+        run: |
+          for i in {1..10}; do
+            if curl -fsS "http://localhost:${BACKEND_PORT}/cases" >/dev/null; then
+              echo "Backend OK - Deployment succeeded"
+              exit 0
+            fi
+            echo "Waiting for backend..."
+            sleep 3
+          done
+          echo "Backend check failed"
+          tail -n 50 app.log || true
+          exit 1
+      - name: Cleanup backend
+        if: always()
+        run: |
+          if [ -f app.pid ]; then
+            kill $(cat app.pid) || true
+          fi
