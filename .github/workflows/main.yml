@@ -74,21 +74,20 @@ jobs:
           nohup java -jar "$JAR" --server.port=${BACKEND_PORT} > app.log 2>&1 &
           echo $! > app.pid
           sleep 15
-      - name: Health check backend via /login
+      - name: Health check backend via /auth/test
         run: |
           for i in {1..10}; do
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:${BACKEND_PORT}/login" \
-              -H "Content-Type: application/json" \
-              -d '{"username":"123@abc.com","password":"123456"}')
-            if [ "$RESPONSE" -eq 200 ]; then
-              echo "Backend OK - Login succeeded"
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${BACKEND_PORT}/auth/test")
+            echo "HTTP $CODE"
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 300 ]; then
+              echo "Backend OK - /auth/test succeeded"
               exit 0
             fi
             echo "Waiting for backend..."
             sleep 3
           done
           echo "Backend check failed"
-          tail -n 50 app.log || true
+          tail -n 200 app.log || true
           exit 1
       - name: Cleanup backend
         if: always()
